@@ -13,115 +13,114 @@
     }
     * { box-sizing: border-box; }
     body {
-      margin:0; font-family:sans-serif;
-      background:var(--bg); color:var(--text);
+      margin: 0;
+      font-family: sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
     .container {
-      max-width:1000px; margin:20px auto; padding:0 16px;
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 0 16px;
     }
     button {
-      background:#2c2c2c; border:none;
-      color:var(--text); padding:8px 12px;
-      border-radius:4px; cursor:pointer;
-      margin-bottom:12px;
+      background: #2c2c2c; border: none;
+      color: var(--text); padding: 8px 12px;
+      border-radius: 4px; cursor: pointer;
+      margin-bottom: 12px;
     }
-    h1 { margin:12px 0; }
+    h1 { margin: 12px 0; }
 
     .grid {
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      grid-auto-rows:180px;
-      gap:12px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-auto-rows: 180px;
+      gap: 12px;
     }
     .panel {
-      background:var(--panel-bg);
-      border:1px solid var(--border);
-      border-radius:6px; padding:10px;
-      position:relative; overflow:hidden;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px;
+      position: relative; overflow: hidden;
     }
     .panel .title {
-      font-size:0.9rem; color:#ccc;
-      margin-bottom:4px;
+      font-size: 0.9rem; color: #ccc;
+      margin-bottom: 4px;
     }
     .panel .value {
-      position:absolute; top:40%; left:50%;
-      transform:translate(-50%,-40%);
-      font-size:2.5rem; font-weight:300;
-      pointer-events:none;
+      position: absolute; top: 40%; left: 50%;
+      transform: translate(-50%, -40%);
+      font-size: 2.5rem; font-weight: 300;
+      pointer-events: none;
     }
     .panel canvas {
-      position:absolute; bottom:0; left:0;
-      width:100%; height:50%; opacity:0.5;
+      position: absolute; bottom: 0; left: 0;
+      width: 100%; height: 50%; opacity: 0.5;
     }
 
-    .historical-section, .battery-section, .map-section {
-      margin-top:30px;
+    .historical-section,
+    .battery-section,
+    .map-section {
+      margin-top: 30px;
       background: var(--panel-bg);
-      border:1px solid var(--border);
-      border-radius:6px;
-      padding:16px;
+      border: 1px solid var(--border);
+      border-radius: 6px; padding: 16px;
     }
     .historical-section h2,
     .battery-section h2,
     .map-section h2 {
-      margin:0 0 12px;
-      font-size:1.1rem; color:#ccc;
+      margin: 0 0 12px;
+      font-size: 1.1rem; color: #ccc;
     }
     .historical-section canvas,
     .battery-section canvas {
-      width:100% !important;
-      height:300px !important;
+      width: 100% !important;
+      height: 300px !important;
     }
-    .battery-section canvas { height:200px !important; }
-    /* map */
-    #map { width:100%; height:300px; border-radius:4px; }
+    .battery-section canvas { height: 200px !important; }
 
-    /* Chart.js legend container */
-    .chart-legend {
-      text-align: center;
-      margin-top: 8px;
-    }
+    /* Legend under historical chart */
     .chart-legend ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
       display: inline-flex;
+      list-style: none;
+      padding: 0; margin: 8px 0 0;
     }
     .chart-legend li {
-      margin: 0 8px;
+      margin: 0 12px;
       font-size: 0.9rem;
       display: flex;
       align-items: center;
       color: var(--text);
     }
-    .chart-legend span {
-      display:inline-block;
-      width:12px; height:12px;
-      margin-right:4px;
+    .chart-legend span.swatch {
+      display: inline-block;
+      width: 12px; height: 12px;
+      margin-right: 4px;
+      border-radius: 2px;
+    }
+
+    /* Leaflet map */
+    #map {
+      width: 100%; height: 300px;
+      border-radius: 4px;
     }
   </style>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Leaflet -->
+  <!-- Leaflet CSS & JS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-    integrity="sha256-sA+993GmH7IjY9yE90AwvMJhW+xQ+5F5Y4u9gI6siCk="
-    crossorigin=""
   />
-  <script
-    src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
-    integrity="sha256-DxmMT3zv1IH8mXoxL4W4xLP4xhcGNIvtG6an0wV+gWY="
-    crossorigin=""
-  ></script>
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 </head>
 <body>
   <div class="container">
     <button onclick="history.back()">← Back to Overview</button>
     <h1 id="dash-title">Sensor Dashboard</h1>
 
-    <!-- 7 small panels -->
+    <!-- Small panels -->
     <div class="grid">
       <div class="panel">
         <div class="title">Current – Channel 1</div>
@@ -160,7 +159,7 @@
       </div>
     </div>
 
-    <!-- Historical Chart -->
+    <!-- Historical Chart + Legend -->
     <div class="historical-section">
       <h2>Historical Data</h2>
       <canvas id="historical-chart"></canvas>
@@ -180,27 +179,26 @@
     </div>
   </div>
 
+
   <script>
-    // Title
+    // Set title
     const params = new URLSearchParams(location.search);
     const farm = params.get('supplier') || 'Unknown';
-    document.getElementById('dash-title')
-      .textContent = `Dashboard – Farm ${farm}`;
+    document.getElementById('dash-title').textContent = `Dashboard – Farm ${farm}`;
 
-    // Helper for mini‐charts
-    function makeChart(id, pts) {
+    // mini‐charts helper
+    function makeChart(id, pts, color='#2ecc71') {
       new Chart(document.getElementById(id), {
-        type: 'line',
-        data: { datasets:[{ data:pts, fill:false, borderColor:'#2ecc71', borderWidth:1.5, pointRadius:0 }]},
+        type:'line',
+        data:{ datasets:[{ data:pts, fill:false, borderColor:color, borderWidth:1.5, pointRadius:0 }]},
         options:{
           animation:false, responsive:true, maintainAspectRatio:false,
-          scales:{ x:{display:false}, y:{display:false} },
+          scales:{ x:{ display:false }, y:{ display:false } },
           plugins:{ legend:false, tooltip:false }
         }
       });
     }
-
-    const now = Date.now(), past = now - 6*3600*1000;
+    const now=Date.now(), past=now-6*3600*1000;
     makeChart('c1', [{x:past,y:2.5},{x:now,y:0.4}]);
     makeChart('c2', [{x:past,y:15},{x:now,y:13.5}]);
     makeChart('c3', [{x:past,y:20.5},{x:now,y:18}]);
@@ -209,131 +207,87 @@
     makeChart('c6', [{x:past,y:3340},{x:now,y:3343.03}]);
     makeChart('c7', [{x:past,y:3720},{x:now,y:3722.98}]);
 
-    // ------- Historical Chart -------
-    const labels = [
-      '2025-05-02','2025-05-03','2025-05-04',
-      '2025-05-05','2025-05-06','2025-05-07','2025-05-08'
-    ];
-    // sample values
-    const vatTemp   = [21.1,21.15,21.2,21.18,21.25,21.22,21.3];
-    const milkTemp  = [20.5,20.6,20.7,20.65,20.6,20.7,20.8];
-    const agitCurr  = [1.2,1.3,1.1,1.25,1.2,1.15,1.3];
-    const sensor440 = [30,32,31,33,34,32,35];
+    // Historical Chart
+    const labels = ['2025-05-02','05-03','05-04','05-05','05-06','05-07','05-08'];
+    const vatTemp  = [21.1,21.15,21.2,21.18,21.25,21.22,21.3];
+    const milkTemp = [20.5,20.6,20.7,20.65,20.6,20.7,20.8];
+    const agitCurr = [1.2,1.3,1.1,1.25,1.2,1.15,1.3];
+    const s440     = [30,32,31,33,34,32,35];
 
     const histCtx = document.getElementById('historical-chart');
-    const historicalChart = new Chart(histCtx, {
+    const histChart = new Chart(histCtx, {
       type:'line',
       data:{
         labels,
         datasets:[
-          {
-            label: 'Vat 1 Temperature',
-            data: vatTemp,
-            borderColor:'#1abc9c',
-            fill:false, tension:0.3
-          },
-          {
-            label: 'Milk To Vat Temperature',
-            data: milkTemp,
-            borderColor:'#9b59b6',
-            fill:false, tension:0.3
-          },
-          {
-            label: 'Agitator Current',
-            data: agitCurr,
-            borderColor:'#e74c3c',
-            fill:false, tension:0.3
-          },
-          {
-            label: '44074V2T',
-            data: sensor440,
-            borderColor:'#f1c40f',
-            fill:false, tension:0.3
-          }
+          {label:'Vat 1 Temperature',    data:vatTemp,  borderColor:'#1abc9c', fill:false, tension:0.3},
+          {label:'Milk To Vat Temperature',data:milkTemp,borderColor:'#9b59b6', fill:false, tension:0.3},
+          {label:'Agitator Current',       data:agitCurr, borderColor:'#e74c3c', fill:false, tension:0.3},
+          {label:'44074V2T',               data:s440,     borderColor:'#f1c40f', fill:false, tension:0.3}
         ]
       },
       options:{
-        responsive:true,
-        maintainAspectRatio:false,
+        responsive:true, maintainAspectRatio:false,
         scales:{
-          x:{
-            ticks:{color:'#bbb'},
-            grid:{color:'#333'}
-          },
-          y:{
-            ticks:{color:'#bbb'},
-            grid:{color:'#333'}
-          }
+          x:{ ticks:{color:'#bbb'}, grid:{color:'#333'} },
+          y:{ ticks:{color:'#bbb'}, grid:{color:'#333'} }
         },
-        plugins:{
-          legend:{
-            display:false
-          },
-          tooltip:{mode:'index',intersect:false}
-        },
+        plugins:{ legend:{ display:false }, tooltip:{mode:'index',intersect:false} },
         interaction:{mode:'nearest',axis:'x',intersect:false}
       }
     });
 
-    // generate custom legend
-    document.getElementById('historical-legend').innerHTML =
-      historicalChart.generateLegend();
-
-    // style legend items with swatches
-    const legendItems = document.querySelectorAll('#historical-legend li');
-    legendItems.forEach(li => {
-      const color = li.querySelector('span.chartjs-legend-box')
-        .style.backgroundColor;
-      li.innerHTML = `<span style="background:${color}"></span>${li.textContent}`;
+    // Build custom legend
+    const leg = document.getElementById('historical-legend');
+    const ul  = document.createElement('ul');
+    histChart.data.datasets.forEach(ds=>{
+      const li = document.createElement('li');
+      const sw = document.createElement('span');
+      sw.className = 'swatch';
+      sw.style.backgroundColor = ds.borderColor;
+      li.appendChild(sw);
+      li.appendChild(document.createTextNode(ds.label));
+      ul.appendChild(li);
     });
+    leg.appendChild(ul);
 
-    // ------- Battery Bar Chart -------
+    // Battery Bar Chart
     const sensors = ['Vat 1 Temp','Milk Temp','Agitator','44074V2T'];
-    const batteryLevels = [85, 60, 45, 95];
+    const batteryLevels = [85,60,45,95];
 
     new Chart(document.getElementById('battery-chart'), {
       type:'bar',
-      data:{ labels:sensors, datasets:[{
-        label:'Battery Level (%)',
-        data:batteryLevels,
-        backgroundColor:['#3498db','#3498db','#3498db','#3498db']
-      }]},
+      data:{
+        labels:sensors,
+        datasets:[{
+          label:'Battery Level (%)',
+          data:batteryLevels,
+          backgroundColor:['#3498db','#3498db','#3498db','#3498db']
+        }]
+      },
       options:{
         responsive:true, maintainAspectRatio:false,
         scales:{
-          x:{
-            ticks:{color:'#bbb'},
-            grid:{display:false}
-          },
-          y:{
-            beginAtZero:true, max:100,
-            ticks:{color:'#bbb'},
-            grid:{color:'#333'}
-          }
+          x:{ ticks:{color:'#bbb'}, grid:{display:false} },
+          y:{ beginAtZero:true,max:100,ticks:{color:'#bbb'},grid:{color:'#333'} }
         },
         plugins:{ legend:{display:false} }
       }
     });
 
-    // ------- Leaflet Map -------
-    const map = L.map('map', {
-      center: [-37.78, 175.27],
-      zoom: 8
-    });
+    // Leaflet Map
+    const map = L.map('map').setView([-37.78,175.27], 8);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:'© OpenStreetMap'
     }).addTo(map);
-
-    // sensor locations
     const locations = [
-      { name:'Vat 1 Temperature',        coords:[-37.78,175.27] },
-      { name:'Milk To Vat Temperature',  coords:[-37.80,175.25] },
-      { name:'Agitator Current',         coords:[-37.76,175.29] },
-      { name:'44074V2T',                 coords:[-38.18,175.74] }
+      {name:'Vat 1 Temperature',        coords:[-37.78,175.27]},
+      {name:'Milk To Vat Temperature',  coords:[-37.80,175.25]},
+      {name:'Agitator Current',         coords:[-37.76,175.29]},
+      {name:'44074V2T',                 coords:[-38.18,175.74]}
     ];
     locations.forEach(loc=>{
-      L.marker(loc.coords).addTo(map)
-        .bindPopup(loc.name);
+      L.marker(loc.coords).addTo(map).bindPopup(loc.name);
     });
   </script>
 </body>
