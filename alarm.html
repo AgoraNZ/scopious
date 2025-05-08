@@ -12,35 +12,64 @@
       --note:#3498db; --critical:#e74c3c;
     }
     *{box-sizing:border-box;}
-    body{margin:0;font-family:sans-serif;
-      background:var(--bg);color:var(--text);}
-    .container{max-width:900px;
-      margin:20px auto;padding:0 16px;}
+    body{
+      margin:0;
+      font-family:sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .container{
+      max-width:900px;
+      margin:20px auto;
+      padding:0 16px;
+    }
     button{
-      background:#2c2c2c;border:none;
-      color:var(--text);padding:8px 12px;
-      border-radius:4px;cursor:pointer;
+      background:#2c2c2c;
+      border:none;
+      color:var(--text);
+      padding:8px 12px;
+      border-radius:4px;
+      cursor:pointer;
       margin-bottom:12px;
     }
     h1{margin:12px 0;}
-    .filters{display:flex;gap:12px;margin-bottom:12px;}
+    .filters{
+      display:flex;
+      gap:12px;
+      margin-bottom:12px;
+    }
     .filters select,
     .filters input[type=date]{
-      padding:6px 8px;border:none;
+      padding:6px 8px;
+      border:none;
       border-radius:4px;
-      background:#2c2c2c;color:var(--text);
+      background:#2c2c2c;
+      color:var(--text);
     }
-    table{width:100%;border-collapse:collapse;}
-    thead{background:var(--header-bg);}
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
+    thead{
+      background:var(--header-bg);
+    }
     th,td{
-      padding:10px;text-align:left;
-      font-size:0.95rem;color:var(--text);
+      padding:10px;
+      text-align:left;
+      font-size:0.95rem;
+      color:var(--text);
     }
-    tbody tr{border-top:1px solid #444;}
-    tbody tr:hover{background:var(--row-hover);}
-    .dot{display:inline-block;
+    tbody tr{
+      border-top:1px solid #444;
+    }
+    tbody tr:hover{
+      background:var(--row-hover);
+    }
+    .dot{
+      display:inline-block;
       width:10px;height:10px;
-      border-radius:50%;margin-right:6px;
+      border-radius:50%;
+      margin-right:6px;
       vertical-align:middle;
     }
     .status-ok       .dot{background:var(--ok);}
@@ -51,6 +80,8 @@
     td.comment[contenteditable]:focus{
       outline:2px dashed var(--note);
     }
+    /* ensure links (if any) stay white */
+    a { color:var(--text) !important; text-decoration:none; }
   </style>
 </head>
 <body>
@@ -81,48 +112,142 @@
     // 1) get supplier#
     const params = new URLSearchParams(location.search);
     const farm = params.get('supplier') || 'Unknown';
-    document.getElementById('farm-title').textContent =
-      `Farm ${farm} Alarms`;
+    document.getElementById('farm-title').textContent = `Farm ${farm} Alarms`;
 
-    // 2) a palette of example alarms
-    const examples = [
-      { status:'Critical', alarmName:'Vat Wash Failure',   comment:'Operator alerted' },
-      { status:'Warning',  alarmName:'Agitator Fault',      comment:'Under investigation' },
-      { status:'Note',     alarmName:'Battery Low Alarm',   comment:'Recharged soon' },
-      { status:'Ok',       alarmName:'Milk Collection',     comment:'Completed' },
-      { status:'Ok',       alarmName:'Plate Cooler Fault',  comment:'Checked' },
-      { status:'Warning',  alarmName:'Chiller Condition',   comment:'Monitoring' },
-      { status:'Note',     alarmName:'Network Heartbeat',   comment:'All good' },
-      { status:'Ok',       alarmName:'Vat Hot Wash',        comment:'Done' },
-      { status:'Warning',  alarmName:'Low Vacuum Level',    comment:'Adjusting' },
-      { status:'Ok',       alarmName:'Routine Check',       comment:'OK' }
-    ];
+    // 2) per-farm historical data
+    const history = {
+      '12345': [
+        {status:'Ok',       alarmName:'Milk Collection',     time:'2025-05-08 09:11', comment:'Done'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-05-06 09:00', comment:'All systems normal'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-05-04 21:00', comment:'OK'},
+        {status:'Ok',       alarmName:'Vat Hot Wash',        time:'2025-05-03 07:25', comment:''},
+        {status:'Note',     alarmName:'Plate Cooler Fault',  time:'2025-05-01 14:15', comment:'Checked'},
+        {status:'Note',     alarmName:'Battery Low Alarm',   time:'2025-04-29 10:30', comment:'Recharged'},
+        {status:'Ok',       alarmName:'Chiller Condition',   time:'2025-04-27 08:45', comment:''},
+        {status:'Note',     alarmName:'Plant Wash Delay',    time:'2025-04-25 11:20', comment:'Pump scheduled'},
+        {status:'Ok',       alarmName:'Routine Check',       time:'2025-04-23 09:00', comment:''},
+        {status:'Note',     alarmName:'Milk Backup',         time:'2025-04-21 16:40', comment:''}
+      ],
+      '52440': [
+        {status:'Warning',  alarmName:'Plant Wash Delay',    time:'2025-05-07 11:20', comment:'Pump scheduled'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-05-05 09:00', comment:'OK'},
+        {status:'Note',     alarmName:'Milk Collection',     time:'2025-05-03 09:11', comment:'Done'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-05-01 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Plate Cooler Fault',  time:'2025-04-30 14:15', comment:'Checked'},
+        {status:'Note',     alarmName:'Battery Low Alarm',   time:'2025-04-28 10:30', comment:'Recharged'},
+        {status:'Note',     alarmName:'Chiller Condition',   time:'2025-04-26 08:45', comment:''},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-24 09:00', comment:''},
+        {status:'Note',     alarmName:'Milk Backup',         time:'2025-04-22 16:40', comment:''},
+        {status:'Note',     alarmName:'Plant Wash Delay',    time:'2025-04-20 11:20', comment:'OK'}
+      ],
+      '44074': [
+        {status:'Critical', alarmName:'Vat Wash Failure',    time:'2025-05-06 05:39', comment:'Operator alerted'},
+        {status:'Warning',  alarmName:'Agitator Fault',      time:'2025-05-04 18:30', comment:'Monitoring'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-05-02 09:00', comment:'OK'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-05-01 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Milk Collection',     time:'2025-04-30 09:11', comment:'Done'},
+        {status:'Note',     alarmName:'Plate Cooler Fault',  time:'2025-04-28 14:15', comment:'Checked'},
+        {status:'Note',     alarmName:'Chiller Condition',   time:'2025-04-26 08:45', comment:''},
+        {status:'Note',     alarmName:'Battery Low Alarm',   time:'2025-04-24 10:30', comment:'OK'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-22 09:00', comment:''},
+        {status:'Note',     alarmName:'Milk Backup',         time:'2025-04-20 16:40', comment:''}
+      ],
+      '35421': [
+        {status:'Ok',       alarmName:'Milk Collection',     time:'2025-05-05 14:15', comment:'Done'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-05-03 09:00', comment:'OK'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-05-01 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Plate Cooler Fault',  time:'2025-04-30 14:15', comment:'Checked'},
+        {status:'Note',     alarmName:'Chiller Condition',   time:'2025-04-28 08:45', comment:''},
+        {status:'Note',     alarmName:'Battery Low Alarm',   time:'2025-04-26 10:30', comment:'OK'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-24 09:00', comment:''},
+        {status:'Note',     alarmName:'Milk Backup',         time:'2025-04-22 16:40', comment:''},
+        {status:'Note',     alarmName:'Plant Wash Delay',    time:'2025-04-20 11:20', comment:'OK'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-18 09:00', comment:''}
+      ],
+      '98765': [
+        {status:'Warning',  alarmName:'Battery Low Alarm',   time:'2025-05-04 10:30', comment:'Recharged'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-05-02 09:00', comment:'OK'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-05-01 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Milk Collection',     time:'2025-04-30 09:11', comment:'Done'},
+        {status:'Note',     alarmName:'Plate Cooler Fault',  time:'2025-04-28 14:15', comment:'Checked'},
+        {status:'Note',     alarmName:'Chiller Condition',   time:'2025-04-26 08:45', comment:''},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-24 09:00', comment:''},
+        {status:'Note',     alarmName:'Milk Backup',         time:'2025-04-22 16:40', comment:''},
+        {status:'Note',     alarmName:'Plant Wash Delay',    time:'2025-04-20 11:20', comment:'Pump ok'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-18 09:00', comment:''}
+      ],
+      '24680': [
+        {status:'Ok',       alarmName:'Milk Collection',     time:'2025-05-03 08:45', comment:'Done'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-05-01 09:00', comment:'OK'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-04-30 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Plate Cooler Fault',  time:'2025-04-28 14:15', comment:'Checked'},
+        {status:'Note',     alarmName:'Chiller Condition',   time:'2025-04-26 08:45', comment:''},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-24 09:00', comment:''},
+        {status:'Note',     alarmName:'Milk Backup',         time:'2025-04-22 16:40', comment:''},
+        {status:'Note',     alarmName:'Plant Wash Delay',    time:'2025-04-20 11:20', comment:'OK'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-18 09:00', comment:''},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-04-16 21:00', comment:'OK'}
+      ],
+      '13579': [
+        {status:'Warning',  alarmName:'Agitator Fault',      time:'2025-05-02 18:00', comment:'Under investigation'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-05-01 09:00', comment:'OK'},
+        {status:'Note',     alarmName:'Milk Collection',     time:'2025-04-30 09:11', comment:'Done'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-04-29 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Plate Cooler Fault',  time:'2025-04-28 14:15', comment:'Checked'},
+        {status:'Note',     alarmName:'Chiller Condition',   time:'2025-04-27 08:45', comment:''},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-26 09:00', comment:''},
+        {status:'Note',     alarmName:'Milk Backup',         time:'2025-04-25 16:40', comment:''},
+        {status:'Note',     alarmName:'Plant Wash Delay',    time:'2025-04-24 11:20', comment:'OK'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-04-23 21:00', comment:'OK'}
+      ],
+      '11223': [
+        {status:'Ok',       alarmName:'Vat Hot Wash',        time:'2025-05-01 07:25', comment:'Done'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-30 09:00', comment:'OK'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-04-29 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Plate Cooler Fault',  time:'2025-04-28 14:15', comment:'Checked'},
+        {status:'Note',     alarmName:'Chiller Condition',   time:'2025-04-27 08:45', comment:''},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-26 09:00', comment:''},
+        {status:'Note',     alarmName:'Milk Backup',         time:'2025-04-25 16:40', comment:''},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-04-24 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Plant Wash Delay',    time:'2025-04-23 11:20', comment:'Pump ok'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-22 09:00', comment:''}
+      ],
+      '99887': [
+        {status:'Critical', alarmName:'Temperature Fault',   time:'2025-04-30 12:50', comment:'Sensor replaced'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-29 09:00', comment:'OK'},
+        {status:'Note',     alarmName:'Milk Collection',     time:'2025-04-28 09:11', comment:'Done'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-04-27 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Plate Cooler Fault',  time:'2025-04-26 14:15', comment:'Checked'},
+        {status:'Note',     alarmName:'Chiller Condition',   time:'2025-04-25 08:45', comment:''},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-24 09:00', comment:''},
+        {status:'Note',     alarmName:'Milk Backup',         time:'2025-04-23 16:40', comment:''},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-04-22 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Plant Wash Delay',    time:'2025-04-21 11:20', comment:'OK'}
+      ],
+      '55678': [
+        {status:'Note',     alarmName:'Milk Backup',         time:'2025-04-29 16:40', comment:''},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-27 09:00', comment:'OK'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-04-25 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Plate Cooler Fault',  time:'2025-04-24 14:15', comment:'Checked'},
+        {status:'Note',     alarmName:'Chiller Condition',   time:'2025-04-23 08:45', comment:''},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-22 09:00', comment:''},
+        {status:'Note',     alarmName:'Milk Collection',     time:'2025-04-21 09:11', comment:'Done'},
+        {status:'Note',     alarmName:'Network Heartbeat',   time:'2025-04-20 21:00', comment:'OK'},
+        {status:'Note',     alarmName:'Plant Wash Delay',    time:'2025-04-19 11:20', comment:'OK'},
+        {status:'Note',     alarmName:'Routine Check',       time:'2025-04-18 09:00', comment:''}
+      ]
+    };
 
-    // 3) build 10+ entries for *this* farm
-    const rows = [];
-    for (let i = 0; i < 12; i++) {
-      const ex = examples[i % examples.length];
-      // timestamp staggered backwards by i days
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const ts = d.toISOString().replace('T',' ').slice(0,16);
-      rows.push({
-        supplier: farm,
-        status: ex.status,
-        alarmName: ex.alarmName,
-        time: ts,
-        comment: ex.comment
-      });
-    }
+    // 3) pick the right array, or fallback to empty array
+    const rows = history[farm] || [];
 
-    // 4) populate type-filter
+    // 4) populate alarm-type dropdown
     const typeSel = document.getElementById('typeFilter');
-    new Set(rows.map(r=>r.alarmName))
-      .forEach(name=>{
-        const o = document.createElement('option');
-        o.value = name; o.textContent = name;
-        typeSel.appendChild(o);
-      });
+    new Set(rows.map(r=>r.alarmName)).forEach(name=>{
+      const o = document.createElement('option');
+      o.value = name; o.textContent = name;
+      typeSel.appendChild(o);
+    });
 
     // 5) render function
     function renderDetails(data) {
@@ -142,18 +267,18 @@
       });
     }
 
-    // 6) initial render
+    // initial render
     renderDetails(rows);
 
-    // 7) filtering logic
+    // 6) filtering
     function applyFilters() {
       let out = rows;
-      const t = typeSel.value;
-      const f = document.getElementById('fromDate').value;
-      const to = document.getElementById('toDate').value;
-      if (t)   out = out.filter(r=> r.alarmName === t);
-      if (f)   out = out.filter(r=> r.time >= f);
-      if (to)  out = out.filter(r=> r.time <= to + ' 23:59');
+      const t  = typeSel.value;
+      const f  = document.getElementById('fromDate').value;
+      const t2 = document.getElementById('toDate').value;
+      if (t)  out = out.filter(r=>r.alarmName === t);
+      if (f)  out = out.filter(r=>r.time >= f);
+      if (t2) out = out.filter(r=>r.time <= t2 + ' 23:59');
       renderDetails(out);
     }
 
