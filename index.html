@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Tatua</title>
+  <title>Dairy Farm Alerts Overview</title>
   <style>
     :root {
       --bg: #1e1e1e;
@@ -53,11 +53,18 @@
       display: block; width: 100%; height: 100%;
     }
     td.comment { min-width: 120px; }
+    /* footer button */
+    .footer-btn button {
+      padding:10px 20px; font-size:1rem;
+      border:none; border-radius:4px;
+      background:#3498db; color:#fff;
+      cursor:pointer;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Tatua</h1>
+    <h1>Dairy Farm Alerts Overview</h1>
     <div class="search">
       <input id="search" placeholder="🔍 Filter by supplier number…" />
     </div>
@@ -73,35 +80,38 @@
       </thead>
       <tbody id="overview-body"></tbody>
     </table>
+
+    <div class="footer-btn" style="text-align:center; margin-top:20px;">
+      <button onclick="location.href='rules.html'">Create Alarm / Rule</button>
+    </div>
   </div>
 
   <script>
-    // 1) alarm categories
+    // 1) exact eight alarm names
     const ALARMS = {
       info:    ['Milk Collection','Vat Hot Wash'],
       warning: ['Battery Low Alarm'],
       critical:['Plate Cooler Fault','Agitator Fault','Vat Chiller Compressor Fault']
     };
 
-    // 2) configure which farms have historic critical/warning slots
+    // 2) configure which farms have historic critical/warning
     const historyCfg = {
-      '12345': { criticalOn: null,             warningOn: null },
-      '52440': { criticalOn: null,             warningOn: null },
+      '12345': { criticalOn: null,               warningOn: null },
+      '52440': { criticalOn: null,               warningOn: null },
       '44074': { criticalOn: '2025-05-06 05:39', warningOn: null },
-      '35421': { criticalOn: null,             warningOn: null },
-      '98765': { criticalOn: null,             warningOn: '2025-05-04 10:30' },
-      '24680': { criticalOn: null,             warningOn: null },
-      '13579': { criticalOn: null,             warningOn: null },
-      '11223': { criticalOn: null,             warningOn: null },
+      '35421': { criticalOn: null,               warningOn: null },
+      '98765': { criticalOn: null,               warningOn: '2025-05-04 10:30' },
+      '24680': { criticalOn: null,               warningOn: null },
+      '13579': { criticalOn: null,               warningOn: null },
+      '11223': { criticalOn: null,               warningOn: null },
       '99887': { criticalOn: '2025-04-30 12:50', warningOn: null },
-      '55678': { criticalOn: null,             warningOn: null }
+      '55678': { criticalOn: null,               warningOn: null }
     };
 
-    // 3) build overview row for each farm
+    // 3) build overview row
     function makeOverview(sup) {
       const cfg = historyCfg[sup];
-      let status, alarmName='', time='', comment='';
-
+      let status='Ok', alarmName='', time='', comment='';
       if (cfg.criticalOn) {
         status    = 'Critical';
         alarmName = ALARMS.critical[0];
@@ -113,24 +123,19 @@
         alarmName = ALARMS.warning[0];
         time      = cfg.warningOn;
       }
-      else {
-        status = 'Ok';
-      }
-
       return { supplier: sup, status, alarmName, time, comment };
     }
 
-    // 4) assemble data and sort by severity
-    const suppliers = Object.keys(historyCfg);
-    const severity  = { 'Critical':3,'Warning':2,'Info':1,'Ok':0 };
-    let overviewData = suppliers.map(makeOverview)
+    // 4) assemble & sort by severity
+    const severity = { 'Critical':3,'Warning':2,'Info':1,'Ok':0 };
+    const overviewData = Object.keys(historyCfg)
+      .map(makeOverview)
       .sort((a,b)=> severity[b.status] - severity[a.status]);
 
-    // 5) render
     function renderOverview(rows) {
       const tbody = document.getElementById('overview-body');
       tbody.innerHTML = '';
-      rows.forEach(r=>{
+      rows.forEach(r => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><a href="dashboard.html?supplier=${r.supplier}">${r.supplier}</a></td>
@@ -146,15 +151,13 @@
         tbody.appendChild(tr);
       });
     }
-
     renderOverview(overviewData);
 
-    // 6) live filter
     document.getElementById('search')
-      .addEventListener('input', e => {
+      .addEventListener('input', e=>{
         const q = e.target.value.trim();
         renderOverview(
-          overviewData.filter(r => r.supplier.includes(q))
+          overviewData.filter(r=> r.supplier.includes(q))
         );
       });
   </script>
