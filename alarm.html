@@ -6,12 +6,12 @@
   <title>Farm Alarms Detail</title>
   <style>
     :root {
-      --bg:#1e1e1e; --header-bg:#2c2c2c;
-      --row-hover:#333; --text:#f5f5f5;
-      --ok:#2ecc71; --warning:#f39c12;
-      --info:#3498db; --critical:#e74c3c;
+      --bg: #1e1e1e; --header-bg: #2c2c2c;
+      --row-hover: #333; --text: #f5f5f5;
+      --ok: #2ecc71; --warning: #f39c12;
+      --info: #3498db; --critical: #e74c3c;
     }
-    * { box-sizing:border-box; }
+    * { box-sizing: border-box; }
     body {
       margin:0; font-family:sans-serif;
       background:var(--bg); color:var(--text);
@@ -26,40 +26,35 @@
       margin-bottom:12px;
     }
     h1 { margin:12px 0; }
-    .filters {
-      display:flex; gap:12px; margin-bottom:12px;
-    }
+    .filters { display:flex; gap:12px; margin-bottom:12px; }
     .filters select,
     .filters input[type=date] {
       padding:6px 8px; border:none; border-radius:4px;
       background:#2c2c2c; color:var(--text);
     }
-    table {
-      width:100%; border-collapse:collapse;
-    }
+    table { width:100%; border-collapse:collapse; }
     thead { background:var(--header-bg); }
     th, td {
       padding:10px; text-align:left;
       font-size:0.95rem; color:var(--text);
+      border-bottom:1px solid #444;
     }
-    tbody tr { border-top:1px solid #444; }
     tbody tr:hover { background:var(--row-hover); }
     .dot {
       display:inline-block; width:10px; height:10px;
       border-radius:50%; margin-right:6px; vertical-align:middle;
     }
-    .status-ok       .dot { background:var(--ok); }
-    .status-warning  .dot { background:var(--warning); }
-    .status-info     .dot { background:var(--info); }
-    .status-critical .dot { background:var(--critical); }
-    a { color:var(--text)!important; text-decoration:none; }
-    td.comment { min-width:120px; }
-    .footer-btn { text-align:center; margin-top:20px; }
+    .status-ok       .dot{background:var(--ok);}
+    .status-warning  .dot{background:var(--warning);}
+    .status-info     .dot{background:var(--info);}
+    .status-critical .dot{background:var(--critical);}
+    a{color:var(--text)!important;text-decoration:none;}
+    td.comment{min-width:120px;}
+    .footer-btn{ text-align:center; margin-top:20px; }
     .footer-btn button {
       padding:10px 20px; font-size:1rem;
       border:none; border-radius:4px;
-      background:#3498db; color:#fff;
-      cursor:pointer;
+      background:#3498db; color:#fff; cursor:pointer;
     }
   </style>
 </head>
@@ -94,11 +89,13 @@
   </div>
 
   <script>
+    // Alarm categories
     const ALARMS = {
       info:    ['Milk Collection','Vat Hot Wash'],
       warning: ['Battery Low Alarm'],
       critical:['Plate Cooler Fault','Agitator Fault','Vat Chiller Compressor Fault']
     };
+    // Pre‐configured history
     const historyCfg = {
       '12345': { criticalOn:null, warningOn:null },
       '52440': { criticalOn:null, warningOn:null },
@@ -112,87 +109,92 @@
       '55678': { criticalOn:null, warningOn:null }
     };
 
-    // read supplier#
+    // Read supplier# and set title
     const params = new URLSearchParams(location.search);
     const farm = params.get('supplier') || 'Unknown';
     document.getElementById('farm-title')
       .textContent = `Farm ${farm} Alarms`;
 
-    // build only Info, Warning, Critical
-    function buildRows(sup) {
+    // Build per‐farm events
+    function buildEvents(sup) {
       const cfg = historyCfg[sup] || {};
-      const arr = [];
-      for (let i=0; i<10; i++) {
-        const d = new Date();
-        d.setDate(d.getDate()-i);
-        const ts = d.toISOString().replace('T',' ').slice(0,16);
-        let status, alarmName, comment='';
-        if (cfg.criticalOn === ts) {
-          status='Critical';
-          alarmName=ALARMS.critical[0];
-          comment='Immediate attention required';
-        }
-        else if (cfg.warningOn === ts) {
-          status='Warning';
-          alarmName=ALARMS.warning[0];
-        }
-        else if (i % 3 === 0) {
-          status='Info';
-          alarmName=ALARMS.info[i%2];
-        }
-        else {
-          continue; // skip Ok
-        }
-        arr.push({ status, alarmName, time:ts, comment });
+      const ev = [];
+
+      // Critical first
+      if (cfg.criticalOn) {
+        ev.push({
+          status: 'Critical',
+          alarmName: ALARMS.critical[0],
+          time: cfg.criticalOn,
+          comment: 'Immediate attention required'
+        });
       }
-      return arr;
+      // Then warning
+      if (cfg.warningOn) {
+        ev.push({
+          status: 'Warning',
+          alarmName: ALARMS.warning[0],
+          time: cfg.warningOn,
+          comment: ''
+        });
+      }
+      // Then two info events: 1 & 2 days ago
+      const now = new Date();
+      ['Milk Collection','Vat Hot Wash'].forEach((name,i)=>{
+        const d = new Date(now);
+        d.setDate(now.getDate() - (i+1));
+        const ts = d.toISOString().replace('T',' ').slice(0,16);
+        ev.push({
+          status: 'Info',
+          alarmName: name,
+          time: ts,
+          comment: ''
+        });
+      });
+
+      // Sort by severity then reverse‐chronological
+      const sev = { Critical:4, Warning:3, Info:2, Ok:1 };
+      ev.sort((a,b)=> {
+        if (sev[b.status] !== sev[a.status]) 
+          return sev[b.status] - sev[a.status];
+        return a.time < b.time ? 1 : (a.time > b.time ? -1 : 0);
+      });
+      return ev;
     }
 
-    const rows = buildRows(farm);
+    // Full event list
+    let rows = buildEvents(farm);
 
-    // populate filter dropdown
+    // Populate type filter
     const typeSel = document.getElementById('typeFilter');
-    new Set(rows.map(r=>r.alarmName)).forEach(name=>{
+    [...new Set(rows.map(r=>r.alarmName))].forEach(name=>{
       const o = document.createElement('option');
       o.value = name; o.textContent = name;
       typeSel.appendChild(o);
     });
 
-    // render to table
+    // Render into table
     function renderDetails(data) {
-      const tbody = document.getElementById('detail-body');
-      tbody.innerHTML = '';
-      data.forEach(r => {
+      const tb = document.getElementById('detail-body');
+      tb.innerHTML = '';
+      data.forEach(r=>{
         const tr = document.createElement('tr');
-        // Status
-        const tdSt = document.createElement('td');
-        tdSt.classList.add('status-'+r.status.toLowerCase());
-        tdSt.innerHTML = `<span class="dot"></span>${r.status}`;
-        tr.appendChild(tdSt);
-        // Name
-        const tdNm = document.createElement('td');
-        tdNm.textContent = r.alarmName;
-        tr.appendChild(tdNm);
-        // Time
-        const tdTm = document.createElement('td');
-        tdTm.textContent = r.time;
-        tr.appendChild(tdTm);
-        // Comment, editable only if Critical
-        const tdCm = document.createElement('td');
-        tdCm.classList.add('comment');
-        if (r.status === 'Critical') {
-          tdCm.contentEditable = true;
-          tdCm.textContent = r.comment;
-        }
-        tr.appendChild(tdCm);
-
-        tbody.appendChild(tr);
+        tr.innerHTML = `
+          <td class="status-${r.status.toLowerCase()}">
+            <span class="dot"></span>${r.status}
+          </td>
+          <td>${r.alarmName}</td>
+          <td>${r.time}</td>
+          <td class="comment" ${r.status==='Critical'?'contenteditable':''}>
+            ${r.status==='Critical'?r.comment:''}
+          </td>
+        `;
+        tb.appendChild(tr);
       });
     }
-
     renderDetails(rows);
 
-    // filtering
+    // Filtering
     function applyFilters() {
       let out = rows.slice();
       const t = typeSel.value;
