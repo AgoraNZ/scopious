@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dairy Farm Status Dashboard</title>
+  <style>
+    :root {
+      --bg: #1e1e1e;
+      --header-bg: #2c2c2c;
+      --row-hover: #333;
+      --text: #f5f5f5;
+      --ok: #2ecc71;
+      --warning: #f39c12;
+      --note: #3498db;
+      --critical: #e74c3c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+    h1 {
+      margin-bottom: 10px;
+      font-size: 1.5rem;
+    }
+    .search {
+      margin-bottom: 15px;
+    }
+    .search input {
+      width: 100%;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead {
+      background: var(--header-bg);
+    }
+    thead th {
+      padding: 12px;
+      text-align: left;
+      font-weight: normal;
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+    }
+    tbody tr {
+      border-top: 1px solid #444;
+      cursor: default;
+    }
+    tbody tr:hover {
+      background: var(--row-hover);
+    }
+    td {
+      padding: 12px;
+      font-size: 0.95rem;
+    }
+    .status-label {
+      display: flex;
+      align-items: center;
+    }
+    .status-label .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    .status-ok    .dot { background: var(--ok); }
+    .status-warning .dot { background: var(--warning); }
+    .status-note  .dot { background: var(--note); }
+    .status-critical .dot { background: var(--critical); }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+    /* Make entire row clickable when hovering over supplier cell */
+    td.supplier a { display: block; width: 100%; height: 100%; }
+    input.comment-check {
+      transform: scale(1.1);
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Farm Status Dashboard</h1>
+    <div class="search">
+      <input type="text" id="search" placeholder="🔍 Search by Supplier Number…" />
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Supplier Number</th>
+          <th>Status</th>
+          <th>Comments</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <!-- rows inserted by JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // example data; add/remove rows as you like
+    const data = [
+      { supplier: '44074', status: 'Critical', comment: 'Pump replaced' },
+      { supplier: '3521',  status: 'Critical', comment: 'Cleaning in progress' },
+      { supplier: '49',    status: 'Warning',  comment: '' },
+      { supplier: '100',   status: 'Note',     comment: '' },
+      { supplier: '5244',  status: 'Ok',       comment: '' }
+    ];
+
+    // assign severity for sorting
+    const severity = { 'Critical': 3, 'Warning': 2, 'Note': 1, 'Ok': 0 };
+
+    // render rows into table-body
+    function renderTable(rows) {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+      rows.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+
+        // Supplier Number cell
+        const tdSupp = document.createElement('td');
+        tdSupp.classList.add('supplier');
+        const link = document.createElement('a');
+        link.href = 'https://app.scopious.co.nz/dashboards/0ece5d003f565000';
+        link.target = '_blank';
+        link.textContent = row.supplier;
+        tdSupp.appendChild(link);
+        tr.appendChild(tdSupp);
+
+        // Status cell
+        const tdStatus = document.createElement('td');
+        tdStatus.classList.add('status-label', 'status-' + row.status.toLowerCase());
+        const dot = document.createElement('span');
+        dot.classList.add('dot');
+        const lbl = document.createElement('span');
+        lbl.textContent = row.status;
+        tdStatus.appendChild(dot);
+        tdStatus.appendChild(lbl);
+        tr.appendChild(tdStatus);
+
+        // Comments cell
+        const tdComm = document.createElement('td');
+        if (row.status === 'Critical') {
+          const chk = document.createElement('input');
+          chk.type = 'checkbox';
+          chk.classList.add('comment-check');
+          chk.id = `chk-${idx}`;
+          const lblChk = document.createElement('label');
+          lblChk.htmlFor = chk.id;
+          lblChk.textContent = row.comment;
+          tdComm.appendChild(chk);
+          tdComm.appendChild(lblChk);
+        }
+        tr.appendChild(tdComm);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // initial sort + render
+    function init() {
+      data.sort((a, b) => severity[b.status] - severity[a.status]);
+      renderTable(data);
+    }
+
+    // live-filter on search
+    document.getElementById('search').addEventListener('input', e => {
+      const q = e.target.value.trim();
+      const filtered = data.filter(r =>
+        r.supplier.includes(q)
+      );
+      renderTable(filtered);
+    });
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
