@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Create Alarm Rule</title>
   <style>
-    body { margin:0; font-family:sans-serif;
-      background:#1e1e1e; color:#f5f5f5; }
-    .container {
-      max-width:900px; margin:20px auto; padding:0 16px;
-    }
+    body { margin:0; font-family:sans-serif; background:#1e1e1e; color:#f5f5f5; }
+    .container { max-width:900px; margin:20px auto; padding:0 16px; }
     h1 { margin-bottom:12px; }
     button {
       background:#2c2c2c; color:#f5f5f5;
@@ -17,12 +14,7 @@
       border-radius:4px; cursor:pointer;
       margin-right:8px;
     }
-    #conditions {
-      list-style:none; padding:0;
-      margin:0 0 12px 0;
-      border:1px solid #444; border-radius:4px;
-      background:#222;
-    }
+    #conditions { list-style:none; padding:0; margin:0 0 12px 0; border:1px solid #444; border-radius:4px; background:#222; }
     #conditions li {
       display:flex; align-items:center;
       padding:8px; border-bottom:1px solid #444;
@@ -37,9 +29,9 @@
     }
     .section { margin-top:24px; }
     .section h2 { margin-bottom:8px; font-size:1.1rem; }
-    .footer {
-      text-align:center; margin-top:24px;
-    }
+    .connector-row { margin:12px 0; display:flex; align-items:center; }
+    .connector-row label { margin-right:8px; }
+    .footer { text-align:center; margin-top:24px; }
   </style>
 </head>
 <body>
@@ -48,12 +40,24 @@
     <button onclick="location.href='index.html'">← Cancel</button>
     <button onclick="saveRule()">Save Rule</button>
 
+    <!-- CONDITIONS -->
     <div class="section">
       <h2>Conditions (drag to reorder)</h2>
       <ul id="conditions"></ul>
       <button onclick="addCondition()">+ Add Condition</button>
     </div>
 
+    <!-- Connector between Conditions and Time-Based -->
+    <div class="connector-row">
+      <label>Then:</label>
+      <select id="condTimeConnector">
+        <option value="AND">AND</option>
+        <option value="OR">OR</option>
+      </select>
+      <span>Time-Based Trigger</span>
+    </div>
+
+    <!-- TIME-BASED RULE -->
     <div class="section">
       <h2>Time-Based Trigger</h2>
       <select id="time-sensor">
@@ -67,9 +71,20 @@
         <option value="=">=</option>
       </select>
       <input id="time-value" type="number" placeholder="5"/> °C for
-      <input id="time-duration" type="number" placeholder="5"/> min
+      <input id="time-duration" type="number" placeholder="5"/> minutes
     </div>
 
+    <!-- Connector between Time-Based and Reset -->
+    <div class="connector-row">
+      <label>Then:</label>
+      <select id="timeResetConnector">
+        <option value="AND">AND</option>
+        <option value="OR">OR</option>
+      </select>
+      <span>Reset Logic</span>
+    </div>
+
+    <!-- RESET LOGIC -->
     <div class="section">
       <h2>Reset Logic</h2>
       <select id="reset-sensor">
@@ -121,50 +136,61 @@
         </select>
         <button onclick="this.parentElement.remove()">✕</button>
       `;
-      li.addEventListener('dragstart', handleDragStart);
-      li.addEventListener('dragover', handleDragOver);
-      li.addEventListener('drop', handleDrop);
+      // drag events
+      li.addEventListener('dragstart', e => {
+        dragSrcEl = li;
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      li.addEventListener('dragover', e => e.preventDefault());
+      li.addEventListener('drop', e => {
+        e.stopPropagation();
+        if (dragSrcEl !== li) {
+          ul.insertBefore(dragSrcEl, li.nextSibling);
+        }
+      });
       ul.appendChild(li);
     }
-    function handleDragStart(e) {
-      dragSrcEl = this;
-      e.dataTransfer.effectAllowed = 'move';
-    }
-    function handleDragOver(e) {
-      e.preventDefault();
-    }
-    function handleDrop(e) {
-      e.stopPropagation();
-      if (dragSrcEl !== this) {
-        this.parentNode.insertBefore(dragSrcEl, this.nextSibling);
-      }
-    }
-    // init with two
+
+    // start with two
     addCondition(); addCondition();
 
     function saveRule() {
+      // gather conditions
       const conds = [];
-      document.querySelectorAll('#conditions li').forEach(li=>{
+      document.querySelectorAll('#conditions li').forEach(li => {
         conds.push({
-          sensor: li.querySelector('.sensor').value,
-          metric: li.querySelector('.metric').value,
-          operator: li.querySelector('.operator').value,
-          value: li.querySelector('.threshold').value,
+          sensor:    li.querySelector('.sensor').value,
+          metric:    li.querySelector('.metric').value,
+          operator:  li.querySelector('.operator').value,
+          value:     li.querySelector('.threshold').value,
           connector: li.querySelector('.connector').value
         });
       });
+
+      const condTimeConnector  = document.getElementById('condTimeConnector').value;
       const timeRule = {
-        sensor:document.getElementById('time-sensor').value,
-        operator:document.getElementById('time-operator').value,
-        value:document.getElementById('time-value').value,
-        duration:document.getElementById('time-duration').value
+        sensor:   document.getElementById('time-sensor').value,
+        operator: document.getElementById('time-operator').value,
+        value:    document.getElementById('time-value').value,
+        duration: document.getElementById('time-duration').value
       };
+
+      const timeResetConnector = document.getElementById('timeResetConnector').value;
       const resetRule = {
-        sensor:document.getElementById('reset-sensor').value,
-        operator:document.getElementById('reset-operator').value,
-        value:document.getElementById('reset-value').value
+        sensor:   document.getElementById('reset-sensor').value,
+        operator: document.getElementById('reset-operator').value,
+        value:    document.getElementById('reset-value').value
       };
-      console.log({conds, timeRule, resetRule});
+
+      // final rule JSON
+      const rule = {
+        conditions: conds,
+        condTimeConnector,
+        timeRule,
+        timeResetConnector,
+        resetRule
+      };
+      console.log('Saved Rule:', rule);
       alert('Rule saved! Check console for JSON.');
     }
   </script>
