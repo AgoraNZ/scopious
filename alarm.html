@@ -10,80 +10,45 @@
       --header-bg: #2c2c2c;
       --row-hover: #333;
       --text: #f5f5f5;
-      --ok: #2ecc71;
-      --warning: #f39c12;
-      --note: #3498db;
-      --critical: #e74c3c;
+      --ok: #2ecc71; --warning: #f39c12;
+      --note: #3498db; --critical: #e74c3c;
     }
-    * { box-sizing: border-box; }
+    * { box-sizing:border-box; }
     body {
-      margin: 0;
-      font-family: sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      margin:0; font-family:sans-serif;
+      background:var(--bg); color:var(--text);
     }
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 0 16px;
-    }
+    .container { max-width:900px; margin:20px auto; padding:0 16px; }
     button {
-      background: #2c2c2c;
-      border: none;
-      color: var(--text);
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
+      background:#2c2c2c; border:none;
+      color:var(--text); padding:8px 12px;
+      border-radius:4px; cursor:pointer;
     }
-    h1 {
-      margin: 12px 0;
+    h1 { margin:12px 0; }
+    .filters { display:flex; gap:12px; margin-bottom:12px; }
+    .filters select, .filters input[type="date"] {
+      padding:6px 8px; border:none; border-radius:4px;
+      background:#2c2c2c; color:var(--text);
     }
-    .filters {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    .filters select,
-    .filters input[type=date] {
-      padding: 6px 8px;
-      border: none;
-      border-radius: 4px;
-      background: #2c2c2c;
-      color: var(--text);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    thead {
-      background: var(--header-bg);
-    }
+    table { width:100%; border-collapse:collapse; }
+    thead { background:var(--header-bg); }
     th, td {
-      padding: 10px;
-      text-align: left;
-      font-size: 0.95rem;
-      color: var(--text);
+      padding:10px; font-size:0.95rem;
+      text-align:left; color:var(--text);
     }
-    tbody tr {
-      border-top: 1px solid #444;
-    }
-    tbody tr:hover {
-      background: var(--row-hover);
-    }
+    tbody tr { border-top:1px solid #444; }
+    tbody tr:hover { background:var(--row-hover); }
     .dot {
-      display: inline-block;
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      margin-right: 6px;
-      vertical-align: middle;
+      display:inline-block; width:10px; height:10px;
+      border-radius:50%; margin-right:6px; vertical-align:middle;
     }
-    .status-ok       .dot { background: var(--ok); }
-    .status-warning  .dot { background: var(--warning); }
-    .status-note     .dot { background: var(--note); }
-    .status-critical .dot { background: var(--critical); }
-    td.comment { cursor: text; }
+    .status-ok       .dot { background:var(--ok); }
+    .status-warning  .dot { background:var(--warning); }
+    .status-note     .dot { background:var(--note); }
+    .status-critical .dot { background:var(--critical); }
+    td.comment { cursor:text; }
     td.comment[contenteditable]:focus {
-      outline: 2px dashed var(--note);
+      outline:2px dashed var(--note);
     }
   </style>
 </head>
@@ -107,104 +72,79 @@
           <th>Comments</th>
         </tr>
       </thead>
-      <tbody id="detail-body">
-        <!-- populated by JS -->
-      </tbody>
+      <tbody id="detail-body"></tbody>
     </table>
   </div>
 
   <script>
-    // get supplier# from URL
     const params = new URLSearchParams(location.search);
     const farm = params.get('supplier') || 'Unknown';
     document.getElementById('farm-title').textContent = `Farm ${farm} Alarms`;
 
-    // lots of example alarms for demonstration
     const detailData = [
-      // Farm 12345
-      { supplier:'12345', status:'Ok',       alarmName:'Milk Collection',      time:'2025-05-08 09:11', comment:'Done' },
-      { supplier:'12345', status:'Ok',       alarmName:'Plate Cooler Fault',   time:'2025-05-07 14:22', comment:'Checked' },
-      { supplier:'12345', status:'Warning',  alarmName:'Agitator Fault',       time:'2025-05-06 18:30', comment:'Monitoring' },
-      { supplier:'12345', status:'Critical', alarmName:'Vat Wash Failure',      time:'2025-05-05 05:39', comment:'Operator alerted' },
-      { supplier:'12345', status:'Note',     alarmName:'Battery Low Alarm',    time:'2025-05-04 10:30', comment:'Charging soon' },
-      { supplier:'12345', status:'Ok',       alarmName:'Chiller Condition',    time:'2025-05-03 08:45', comment:'' },
-      { supplier:'12345', status:'Warning',  alarmName:'Plant Wash Delay',     time:'2025-05-02 11:15', comment:'Pump scheduled' },
-      { supplier:'12345', status:'Ok',       alarmName:'Vat Hot Wash',         time:'2025-05-01 07:25', comment:'' },
-      { supplier:'12345', status:'Critical', alarmName:'Temperature Fault',     time:'2025-04-30 12:50', comment:'Replaced sensor' },
-      { supplier:'12345', status:'Note',     alarmName:'Milk Backup',          time:'2025-04-29 16:40', comment:'' },
-      { supplier:'12345', status:'Ok',       alarmName:'Network Heartbeat',    time:'2025-04-28 09:00', comment:'' },
-      { supplier:'12345', status:'Warning',  alarmName:'Low Vacuum Level',     time:'2025-04-27 15:30', comment:'Investigating' },
-      { supplier:'12345', status:'Ok',       alarmName:'Routine Check',        time:'2025-04-26 10:00', comment:'' },
-
-      // Farm 99887 (just to show multi-farm)
-      { supplier:'99887', status:'Critical', alarmName:'Temperature Fault',     time:'2025-04-30 12:50', comment:'Replaced sensor' },
-      { supplier:'99887', status:'Warning',  alarmName:'Chiller Condition',    time:'2025-05-03 08:45', comment:'Monitoring' },
-      { supplier:'99887', status:'Ok',       alarmName:'Vat Hot Wash',         time:'2025-05-01 07:25', comment:'Completed' }
+      // sample for farm 12345
+      { supplier:'12345', status:'Ok',       alarmName:'Milk Collection',   time:'2025-05-08 09:11', comment:'Done' },
+      { supplier:'12345', status:'Warning',  alarmName:'Agitator Fault',    time:'2025-05-06 18:30', comment:'Monitoring' },
+      { supplier:'12345', status:'Critical', alarmName:'Vat Wash Failure',   time:'2025-05-05 05:39', comment:'Operator alerted' },
+      { supplier:'12345', status:'Note',     alarmName:'Battery Low Alarm', time:'2025-05-04 10:30', comment:'' },
+      { supplier:'12345', status:'Ok',       alarmName:'Plate Cooler Fault',time:'2025-05-03 14:15', comment:'' },
+      // ...you can add more for this farm or others
     ];
 
-    // only this farm’s alarms
-    let rows = detailData.filter(r => r.supplier === farm);
+    let rows = detailData.filter(r=> r.supplier === farm);
 
-    // populate alarm-type filter
-    const typeSet = new Set(rows.map(r => r.alarmName));
+    // populate type dropdown
     const typeSel = document.getElementById('typeFilter');
-    typeSet.forEach(n=>{
-      const o = document.createElement('option');
-      o.value = n; o.textContent = n;
-      typeSel.appendChild(o);
-    });
+    new Set(rows.map(r=>r.alarmName))
+      .forEach(n=>{
+        const o = document.createElement('option');
+        o.value=n; o.textContent=n;
+        typeSel.appendChild(o);
+      });
 
     function renderDetails(data) {
       const tbody = document.getElementById('detail-body');
       tbody.innerHTML = '';
-      data.forEach(r => {
+      data.forEach(r=>{
         const tr = document.createElement('tr');
-
         // status
-        const tdSt = document.createElement('td');
-        tdSt.classList.add('status-'+r.status.toLowerCase());
-        tdSt.innerHTML = `<span class="dot"></span>${r.status}`;
-        tr.appendChild(tdSt);
-
-        // alarm name
-        const tdN = document.createElement('td');
-        tdN.textContent = r.alarmName;
-        tr.appendChild(tdN);
-
+        const st = document.createElement('td');
+        st.classList.add('status-'+r.status.toLowerCase());
+        st.innerHTML = `<span class="dot"></span>${r.status}`;
+        tr.appendChild(st);
+        // name
+        const nm = document.createElement('td');
+        nm.textContent = r.alarmName;
+        tr.appendChild(nm);
         // time
-        const tdT = document.createElement('td');
-        tdT.textContent = r.time;
-        tr.appendChild(tdT);
-
-        // comment (editable)
-        const tdC = document.createElement('td');
-        tdC.classList.add('comment');
-        tdC.contentEditable = true;
-        tdC.textContent = r.comment;
-        tr.appendChild(tdC);
+        const tm = document.createElement('td');
+        tm.textContent = r.time;
+        tr.appendChild(tm);
+        // comment
+        const cm = document.createElement('td');
+        cm.classList.add('comment');
+        cm.contentEditable = true;
+        cm.textContent = r.comment;
+        tr.appendChild(cm);
 
         tbody.appendChild(tr);
       });
     }
 
-    // initial
     renderDetails(rows);
-
-    // filters
-    function applyFilters() {
-      const tf = typeSel.value;
-      const from = document.getElementById('fromDate').value;
-      const to   = document.getElementById('toDate').value;
-      let filt = rows;
-      if(tf)   filt = filt.filter(r=> r.alarmName === tf);
-      if(from) filt = filt.filter(r=> r.time >= from);
-      if(to)   filt = filt.filter(r=> r.time <= to + ' 23:59');
-      renderDetails(filt);
+    function applyFilters(){
+      const t = typeSel.value;
+      const f = document.getElementById('fromDate').value;
+      const t2= document.getElementById('toDate').value;
+      let out = rows;
+      if(t)  out = out.filter(r=>r.alarmName===t);
+      if(f)  out = out.filter(r=>r.time>=f);
+      if(t2) out = out.filter(r=>r.time<=t2+' 23:59');
+      renderDetails(out);
     }
-
-    typeSel.addEventListener('change', applyFilters);
-    document.getElementById('fromDate').addEventListener('change', applyFilters);
-    document.getElementById('toDate').addEventListener('change', applyFilters);
+    typeSel.addEventListener('change',applyFilters);
+    document.getElementById('fromDate').addEventListener('change',applyFilters);
+    document.getElementById('toDate').addEventListener('change',applyFilters);
   </script>
 </body>
 </html>
