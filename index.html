@@ -57,7 +57,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>Tatua</h1>
+    <h1>Dairy Farm Alerts Overview</h1>
     <div class="search">
       <input id="search" placeholder="🔍 Filter by supplier number…" />
     </div>
@@ -76,77 +76,63 @@
   </div>
 
   <script>
+    // 1) alarm categories
     const ALARMS = {
-      info: ['Milk Collection', 'Vat Hot Wash'],
+      info:    ['Milk Collection','Vat Hot Wash'],
       warning: ['Battery Low Alarm'],
-      critical: ['Plate Cooler Fault','Agitator Fault','Vat Chiller Compressor Fault']
+      critical:['Plate Cooler Fault','Agitator Fault','Vat Chiller Compressor Fault']
     };
-    // per-farm history config (only two farms have a critical; one farm a warning)
+
+    // 2) configure which farms have historic critical/warning slots
     const historyCfg = {
-      '12345': { criticalOn: null,          warningOn: null },
-      '52440': { criticalOn: null,          warningOn: null },
+      '12345': { criticalOn: null,             warningOn: null },
+      '52440': { criticalOn: null,             warningOn: null },
       '44074': { criticalOn: '2025-05-06 05:39', warningOn: null },
-      '35421': { criticalOn: null,          warningOn: null },
-      '98765': { criticalOn: null,          warningOn: '2025-05-04 10:30' },
-      '24680': { criticalOn: null,          warningOn: null },
-      '13579': { criticalOn: null,          warningOn: null },
-      '11223': { criticalOn: null,          warningOn: null },
+      '35421': { criticalOn: null,             warningOn: null },
+      '98765': { criticalOn: null,             warningOn: '2025-05-04 10:30' },
+      '24680': { criticalOn: null,             warningOn: null },
+      '13579': { criticalOn: null,             warningOn: null },
+      '11223': { criticalOn: null,             warningOn: null },
       '99887': { criticalOn: '2025-04-30 12:50', warningOn: null },
-      '55678': { criticalOn: null,          warningOn: null }
+      '55678': { criticalOn: null,             warningOn: null }
     };
 
-    // build 10 days for each farm
-    function buildRows(sup) {
-      const cfg = historyCfg[sup] || {};
-      const rows = [];
-      for (let i=0; i<10; i++) {
-        const d = new Date();
-        d.setDate(d.getDate()-i);
-        const ts = d.toISOString().replace('T',' ').slice(0,16);
-        let status, alarmName, comment='';
+    // 3) build overview row for each farm
+    function makeOverview(sup) {
+      const cfg = historyCfg[sup];
+      let status, alarmName='', time='', comment='';
 
-        if (cfg.criticalOn === ts) {
-          status='Critical';
-          alarmName= ALARMS.critical[0]; // first critical
-          comment='Immediate attention required';
-        }
-        else if (cfg.warningOn === ts) {
-          status='Warning';
-          alarmName= ALARMS.warning[0];
-        }
-        else if (i % 3 === 0) {
-          status='Info';
-          alarmName= ALARMS.info[i%2];
-        }
-        else {
-          status='Ok';
-          alarmName=''; 
-        }
-
-        rows.push({ supplier:sup, status, alarmName, time: status==='Ok'? '':ts, comment });
+      if (cfg.criticalOn) {
+        status    = 'Critical';
+        alarmName = ALARMS.critical[0];
+        time      = cfg.criticalOn;
+        comment   = 'Immediate attention required';
       }
-      return rows;
+      else if (cfg.warningOn) {
+        status    = 'Warning';
+        alarmName = ALARMS.warning[0];
+        time      = cfg.warningOn;
+      }
+      else {
+        status = 'Ok';
+      }
+
+      return { supplier: sup, status, alarmName, time, comment };
     }
 
-    // latest event per farm
+    // 4) assemble data and sort by severity
     const suppliers = Object.keys(historyCfg);
-    let overviewData = suppliers.map(sup => {
-      const latest = buildRows(sup)[0];
-      return {
-        ...latest
-      };
-    });
+    const severity  = { 'Critical':3,'Warning':2,'Info':1,'Ok':0 };
+    let overviewData = suppliers.map(makeOverview)
+      .sort((a,b)=> severity[b.status] - severity[a.status]);
 
-    // sort by severity
-    const sevOrder = { 'Critical':3,'Warning':2,'Info':1,'Ok':0 };
-    overviewData.sort((a,b)=> sevOrder[b.status] - sevOrder[a.status]);
-
+    // 5) render
     function renderOverview(rows) {
       const tbody = document.getElementById('overview-body');
       tbody.innerHTML = '';
       rows.forEach(r=>{
         const tr = document.createElement('tr');
-        tr.innerHTML=`
+        tr.innerHTML = `
           <td><a href="dashboard.html?supplier=${r.supplier}">${r.supplier}</a></td>
           <td class="status-${r.status.toLowerCase()}">
             <a href="alarm.html?supplier=${r.supplier}">
@@ -155,19 +141,20 @@
           </td>
           <td><a href="alarm.html?supplier=${r.supplier}">${r.alarmName}</a></td>
           <td><a href="alarm.html?supplier=${r.supplier}">${r.time}</a></td>
-          <td class="comment">${r.status==='Critical'?r.comment:''}</td>
+          <td class="comment">${r.comment}</td>
         `;
         tbody.appendChild(tr);
       });
     }
+
     renderOverview(overviewData);
 
-    // live filter
+    // 6) live filter
     document.getElementById('search')
-      .addEventListener('input', e=>{
-        const q=e.target.value.trim();
+      .addEventListener('input', e => {
+        const q = e.target.value.trim();
         renderOverview(
-          overviewData.filter(r=> r.supplier.includes(q))
+          overviewData.filter(r => r.supplier.includes(q))
         );
       });
   </script>
