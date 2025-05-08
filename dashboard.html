@@ -26,6 +26,7 @@
       margin-bottom:12px;
     }
     h1 { margin:12px 0; }
+
     .grid {
       display:grid;
       grid-template-columns:repeat(4,1fr);
@@ -53,49 +54,74 @@
       width:100%; height:50%; opacity:0.5;
     }
 
-    /* historical section */
-    .historical-section {
+    .historical-section, .battery-section, .map-section {
       margin-top:30px;
       background: var(--panel-bg);
       border:1px solid var(--border);
       border-radius:6px;
       padding:16px;
     }
-    .historical-section h2 {
+    .historical-section h2,
+    .battery-section h2,
+    .map-section h2 {
       margin:0 0 12px;
-      font-size:1.1rem;
-      color:#ccc;
+      font-size:1.1rem; color:#ccc;
     }
-    .historical-section canvas {
+    .historical-section canvas,
+    .battery-section canvas {
       width:100% !important;
       height:300px !important;
     }
+    .battery-section canvas { height:200px !important; }
+    /* map */
+    #map { width:100%; height:300px; border-radius:4px; }
 
-    /* battery section */
-    .battery-section {
-      margin-top:30px;
-      background: var(--panel-bg);
-      border:1px solid var(--border);
-      border-radius:6px;
-      padding:16px;
+    /* Chart.js legend container */
+    .chart-legend {
+      text-align: center;
+      margin-top: 8px;
     }
-    .battery-section h2 {
-      margin:0 0 12px;
-      font-size:1.1rem;
-      color:#ccc;
+    .chart-legend ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: inline-flex;
     }
-    .battery-section canvas {
-      width:100% !important;
-      height:200px !important;
+    .chart-legend li {
+      margin: 0 8px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      color: var(--text);
+    }
+    .chart-legend span {
+      display:inline-block;
+      width:12px; height:12px;
+      margin-right:4px;
     }
   </style>
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    integrity="sha256-sA+993GmH7IjY9yE90AwvMJhW+xQ+5F5Y4u9gI6siCk="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+    integrity="sha256-DxmMT3zv1IH8mXoxL4W4xLP4xhcGNIvtG6an0wV+gWY="
+    crossorigin=""
+  ></script>
 </head>
 <body>
   <div class="container">
     <button onclick="history.back()">← Back to Overview</button>
     <h1 id="dash-title">Sensor Dashboard</h1>
 
+    <!-- 7 small panels -->
     <div class="grid">
       <div class="panel">
         <div class="title">Current – Channel 1</div>
@@ -138,6 +164,7 @@
     <div class="historical-section">
       <h2>Historical Data</h2>
       <canvas id="historical-chart"></canvas>
+      <div class="chart-legend" id="historical-legend"></div>
     </div>
 
     <!-- Battery Levels Chart -->
@@ -145,16 +172,22 @@
       <h2>Battery Levels</h2>
       <canvas id="battery-chart"></canvas>
     </div>
+
+    <!-- Map View -->
+    <div class="map-section">
+      <h2>Sensor Locations</h2>
+      <div id="map"></div>
+    </div>
   </div>
 
   <script>
-    // set title with farm#
+    // Title
     const params = new URLSearchParams(location.search);
     const farm = params.get('supplier') || 'Unknown';
     document.getElementById('dash-title')
       .textContent = `Dashboard – Farm ${farm}`;
 
-    // mini‐charts helper
+    // Helper for mini‐charts
     function makeChart(id, pts) {
       new Chart(document.getElementById(id), {
         type: 'line',
@@ -176,66 +209,131 @@
     makeChart('c6', [{x:past,y:3340},{x:now,y:3343.03}]);
     makeChart('c7', [{x:past,y:3720},{x:now,y:3722.98}]);
 
-    // Historical chart (category axis)
+    // ------- Historical Chart -------
     const labels = [
       '2025-05-02','2025-05-03','2025-05-04',
       '2025-05-05','2025-05-06','2025-05-07','2025-05-08'
     ];
-    const ch1 = [0.5,1.0,0.8,1.2,0.9,1.5,0.4];
-    const ch2 = [14,14.5,14,15,13.8,14.2,13.5];
-    const temp= [21.2,21.25,21.3,21.28,21.31,21.29,21.3];
+    // sample values
+    const vatTemp   = [21.1,21.15,21.2,21.18,21.25,21.22,21.3];
+    const milkTemp  = [20.5,20.6,20.7,20.65,20.6,20.7,20.8];
+    const agitCurr  = [1.2,1.3,1.1,1.25,1.2,1.15,1.3];
+    const sensor440 = [30,32,31,33,34,32,35];
 
-    new Chart(document.getElementById('historical-chart'), {
+    const histCtx = document.getElementById('historical-chart');
+    const historicalChart = new Chart(histCtx, {
       type:'line',
-      data:{ labels, datasets:[
-        { label:'Ch1 Current',   data:ch1,  borderColor:'#1abc9c', fill:false, tension:0.3 },
-        { label:'Ch2 Current',   data:ch2,  borderColor:'#9b59b6', fill:false, tension:0.3 },
-        { label:'Temperature',   data:temp, borderColor:'#e74c3c', fill:false, tension:0.3 }
-      ]},
+      data:{
+        labels,
+        datasets:[
+          {
+            label: 'Vat 1 Temperature',
+            data: vatTemp,
+            borderColor:'#1abc9c',
+            fill:false, tension:0.3
+          },
+          {
+            label: 'Milk To Vat Temperature',
+            data: milkTemp,
+            borderColor:'#9b59b6',
+            fill:false, tension:0.3
+          },
+          {
+            label: 'Agitator Current',
+            data: agitCurr,
+            borderColor:'#e74c3c',
+            fill:false, tension:0.3
+          },
+          {
+            label: '44074V2T',
+            data: sensor440,
+            borderColor:'#f1c40f',
+            fill:false, tension:0.3
+          }
+        ]
+      },
       options:{
-        responsive:true, maintainAspectRatio:false,
+        responsive:true,
+        maintainAspectRatio:false,
         scales:{
-          x:{ ticks:{color:'#bbb'}, grid:{color:'#333'} },
-          y:{ ticks:{color:'#bbb'}, grid:{color:'#333'} }
+          x:{
+            ticks:{color:'#bbb'},
+            grid:{color:'#333'}
+          },
+          y:{
+            ticks:{color:'#bbb'},
+            grid:{color:'#333'}
+          }
         },
         plugins:{
-          legend:{ labels:{color:'#f5f5f5'} },
+          legend:{
+            display:false
+          },
           tooltip:{mode:'index',intersect:false}
         },
         interaction:{mode:'nearest',axis:'x',intersect:false}
       }
     });
 
-    // Battery bar chart
-    const sensors = ['Sensor A','Sensor B','Sensor C','Sensor D','Sensor E'];
-    const batteryLevels = [85, 60, 45, 95, 72];  // example %
+    // generate custom legend
+    document.getElementById('historical-legend').innerHTML =
+      historicalChart.generateLegend();
+
+    // style legend items with swatches
+    const legendItems = document.querySelectorAll('#historical-legend li');
+    legendItems.forEach(li => {
+      const color = li.querySelector('span.chartjs-legend-box')
+        .style.backgroundColor;
+      li.innerHTML = `<span style="background:${color}"></span>${li.textContent}`;
+    });
+
+    // ------- Battery Bar Chart -------
+    const sensors = ['Vat 1 Temp','Milk Temp','Agitator','44074V2T'];
+    const batteryLevels = [85, 60, 45, 95];
 
     new Chart(document.getElementById('battery-chart'), {
-      type: 'bar',
-      data: {
-        labels: sensors,
-        datasets: [{
-          label: 'Battery Level (%)',
-          data: batteryLevels,
-          backgroundColor: sensors.map(_=>'#3498db')
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        scales: {
-          x: {
-            ticks: { color: '#bbb' },
-            grid: { display: false }
+      type:'bar',
+      data:{ labels:sensors, datasets:[{
+        label:'Battery Level (%)',
+        data:batteryLevels,
+        backgroundColor:['#3498db','#3498db','#3498db','#3498db']
+      }]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        scales:{
+          x:{
+            ticks:{color:'#bbb'},
+            grid:{display:false}
           },
-          y: {
-            beginAtZero: true,
-            max: 100,
-            ticks: { color: '#bbb' },
-            grid: { color: '#333' }
+          y:{
+            beginAtZero:true, max:100,
+            ticks:{color:'#bbb'},
+            grid:{color:'#333'}
           }
         },
-        plugins: { legend: { display: false } }
+        plugins:{ legend:{display:false} }
       }
+    });
+
+    // ------- Leaflet Map -------
+    const map = L.map('map', {
+      center: [-37.78, 175.27],
+      zoom: 8
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:'© OpenStreetMap'
+    }).addTo(map);
+
+    // sensor locations
+    const locations = [
+      { name:'Vat 1 Temperature',        coords:[-37.78,175.27] },
+      { name:'Milk To Vat Temperature',  coords:[-37.80,175.25] },
+      { name:'Agitator Current',         coords:[-37.76,175.29] },
+      { name:'44074V2T',                 coords:[-38.18,175.74] }
+    ];
+    locations.forEach(loc=>{
+      L.marker(loc.coords).addTo(map)
+        .bindPopup(loc.name);
     });
   </script>
 </body>
