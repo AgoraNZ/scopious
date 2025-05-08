@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dairy Farm Status Dashboard</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Dairy Farm Alerts</title>
   <style>
     :root {
       --bg: #1e1e1e;
@@ -17,177 +17,155 @@
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      margin:0;
+      font-family:sans-serif;
+      background:var(--bg);
+      color:var(--text);
     }
     .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 0 15px;
+      max-width:960px;
+      margin:20px auto;
+      padding:0 16px;
     }
-    h1 {
-      margin-bottom: 10px;
-      font-size: 1.5rem;
-    }
+    h1 { margin-bottom:8px; }
     .search {
-      margin-bottom: 15px;
+      margin-bottom:12px;
     }
     .search input {
-      width: 100%;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
+      width:100%;
+      padding:8px 12px;
+      border:none;
+      border-radius:4px;
+      font-size:1rem;
     }
-    .table {
-      width: 100%;
-      border-collapse: collapse;
+    table {
+      width:100%;
+      border-collapse:collapse;
     }
-    thead {
-      background: var(--header-bg);
-    }
-    thead th {
-      padding: 12px;
-      text-align: left;
-      font-weight: normal;
-      font-size: 0.95rem;
-      letter-spacing: 0.5px;
+    thead { background:var(--header-bg); }
+    th, td {
+      padding:10px;
+      text-align:left;
+      font-size:0.95rem;
     }
     tbody tr {
-      border-top: 1px solid #444;
-      cursor: default;
+      border-top:1px solid #444;
     }
     tbody tr:hover {
-      background: var(--row-hover);
+      background:var(--row-hover);
     }
-    td {
-      padding: 12px;
-      font-size: 0.95rem;
+    .dot {
+      display:inline-block;
+      width:10px; height:10px;
+      border-radius:50%;
+      margin-right:6px;
+      vertical-align:middle;
     }
-    .status-label {
-      display: flex;
-      align-items: center;
+    .status-ok       .dot { background:var(--ok); }
+    .status-warning  .dot { background:var(--warning); }
+    .status-note     .dot { background:var(--note); }
+    .status-critical .dot { background:var(--critical); }
+    td.supplier a, td.alarmName a,
+    td.status a, td.time a, td.comment a {
+      display:block; width:100%; height:100%;
+      color:inherit; text-decoration:none;
     }
-    .status-label .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 6px;
-    }
-    .status-ok    .dot { background: var(--ok); }
-    .status-warning .dot { background: var(--warning); }
-    .status-note  .dot { background: var(--note); }
-    .status-critical .dot { background: var(--critical); }
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-    /* Make entire row clickable when hovering over supplier cell */
-    td.supplier a { display: block; width: 100%; height: 100%; }
-    input.comment-check {
-      transform: scale(1.1);
-      margin-right: 6px;
+    td.comment { cursor:text; }
+    td.comment[contenteditable]:focus {
+      outline:2px dashed var(--note);
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Farm Status Dashboard</h1>
+    <h1>Dairy Farm Alerts Overview</h1>
     <div class="search">
-      <input type="text" id="search" placeholder="🔍 Search by Supplier Number…" />
+      <input type="text" id="search" placeholder="🔍 Filter by supplier number…"/>
     </div>
-    <table class="table">
+    <table>
       <thead>
         <tr>
-          <th>Supplier Number</th>
+          <th>Supplier #</th>
           <th>Status</th>
+          <th>Alarm Name</th>
+          <th>Time Triggered</th>
           <th>Comments</th>
         </tr>
       </thead>
-      <tbody id="table-body">
-        <!-- rows inserted by JS -->
+      <tbody id="overview-body">
+        <!-- populated by JS -->
       </tbody>
     </table>
   </div>
 
   <script>
-    // example data; add/remove rows as you like
-    const data = [
-      { supplier: '44074', status: 'Critical', comment: 'Pump replaced' },
-      { supplier: '3521',  status: 'Critical', comment: 'Cleaning in progress' },
-      { supplier: '49',    status: 'Warning',  comment: '' },
-      { supplier: '100',   status: 'Note',     comment: '' },
-      { supplier: '5244',  status: 'Ok',       comment: '' }
+    // example overview data
+    const overviewData = [
+      { supplier:'12345', status:'Ok',       alarmName:'Milk Collection',      time:'2025-05-08 09:11', comment:'' },
+      { supplier:'52440', status:'Warning',  alarmName:'Plant Wash Delay',     time:'2025-05-07 11:20', comment:'Pump maintenance scheduled' },
+      { supplier:'44074', status:'Critical', alarmName:'Vat Wash Failure',      time:'2025-05-06 05:39', comment:'Operator alerted' },
+      { supplier:'35421', status:'Ok',       alarmName:'Plate Cooler Fault',   time:'2025-05-05 14:15', comment:'' },
+      { supplier:'98765', status:'Note',     alarmName:'Battery Low Alarm',    time:'2025-05-04 10:30', comment:'Charging soon' },
+      { supplier:'24680', status:'Ok',       alarmName:'Chiller Condition',    time:'2025-05-03 08:45', comment:'' },
+      { supplier:'13579', status:'Warning',  alarmName:'Agitator Fault',       time:'2025-05-02 18:00', comment:'Under observation' },
+      { supplier:'11223', status:'Ok',       alarmName:'Vat Hot Wash',         time:'2025-05-01 07:25', comment:'' },
+      { supplier:'99887', status:'Critical', alarmName:'Temperature Fault',     time:'2025-04-30 12:50', comment:'Sensor replaced' },
+      { supplier:'55678', status:'Note',     alarmName:'Milk Backup',          time:'2025-04-29 16:40', comment:'' }
     ];
 
-    // assign severity for sorting
-    const severity = { 'Critical': 3, 'Warning': 2, 'Note': 1, 'Ok': 0 };
+    const severity = { 'Critical':3, 'Warning':2, 'Note':1, 'Ok':0 };
 
-    // render rows into table-body
-    function renderTable(rows) {
-      const tbody = document.getElementById('table-body');
+    function renderOverview(rows) {
+      const tbody = document.getElementById('overview-body');
       tbody.innerHTML = '';
-      rows.forEach((row, idx) => {
+      rows.forEach(r => {
         const tr = document.createElement('tr');
 
-        // Supplier Number cell
-        const tdSupp = document.createElement('td');
-        tdSupp.classList.add('supplier');
-        const link = document.createElement('a');
-        link.href = 'https://app.scopious.co.nz/dashboards/0ece5d003f565000';
-        link.target = '_blank';
-        link.textContent = row.supplier;
-        tdSupp.appendChild(link);
-        tr.appendChild(tdSupp);
+        // supplier #
+        const tdSup = document.createElement('td');
+        tdSup.classList.add('supplier');
+        tdSup.innerHTML = `<a href="alarm.html?supplier=${r.supplier}">${r.supplier}</a>`;
+        tr.appendChild(tdSup);
 
-        // Status cell
-        const tdStatus = document.createElement('td');
-        tdStatus.classList.add('status-label', 'status-' + row.status.toLowerCase());
-        const dot = document.createElement('span');
-        dot.classList.add('dot');
-        const lbl = document.createElement('span');
-        lbl.textContent = row.status;
-        tdStatus.appendChild(dot);
-        tdStatus.appendChild(lbl);
-        tr.appendChild(tdStatus);
+        // status
+        const tdSt = document.createElement('td');
+        tdSt.classList.add('status-'+r.status.toLowerCase());
+        tdSt.innerHTML = `<a href="alarm.html?supplier=${r.supplier}"><span class="dot"></span>${r.status}</a>`;
+        tr.appendChild(tdSt);
 
-        // Comments cell
-        const tdComm = document.createElement('td');
-        if (row.status === 'Critical') {
-          const chk = document.createElement('input');
-          chk.type = 'checkbox';
-          chk.classList.add('comment-check');
-          chk.id = `chk-${idx}`;
-          const lblChk = document.createElement('label');
-          lblChk.htmlFor = chk.id;
-          lblChk.textContent = row.comment;
-          tdComm.appendChild(chk);
-          tdComm.appendChild(lblChk);
-        }
-        tr.appendChild(tdComm);
+        // alarm name
+        const tdName = document.createElement('td');
+        tdName.classList.add('alarmName');
+        tdName.innerHTML = `<a href="alarm.html?supplier=${r.supplier}">${r.alarmName}</a>`;
+        tr.appendChild(tdName);
+
+        // time
+        const tdTime = document.createElement('td');
+        tdTime.classList.add('time');
+        tdTime.innerHTML = `<a href="alarm.html?supplier=${r.supplier}">${r.time}</a>`;
+        tr.appendChild(tdTime);
+
+        // comment (editable)
+        const tdCom = document.createElement('td');
+        tdCom.classList.add('comment');
+        tdCom.contentEditable = true;
+        tdCom.innerHTML = r.comment||'';
+        tr.appendChild(tdCom);
 
         tbody.appendChild(tr);
       });
     }
 
-    // initial sort + render
-    function init() {
-      data.sort((a, b) => severity[b.status] - severity[a.status]);
-      renderTable(data);
-    }
+    // initial sort+render
+    const sorted = overviewData.slice().sort((a,b)=>severity[b.status]-severity[a.status]);
+    renderOverview(sorted);
 
-    // live-filter on search
-    document.getElementById('search').addEventListener('input', e => {
+    // live search
+    document.getElementById('search').addEventListener('input', e=>{
       const q = e.target.value.trim();
-      const filtered = data.filter(r =>
-        r.supplier.includes(q)
-      );
-      renderTable(filtered);
+      const filt = sorted.filter(r=> r.supplier.includes(q));
+      renderOverview(filt);
     });
-
-    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
