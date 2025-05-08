@@ -27,9 +27,7 @@
       margin: 20px auto;
       padding: 0 16px;
     }
-    h1 {
-      margin-bottom: 12px;
-    }
+    h1 { margin-bottom: 12px; }
 
     /* Summary table */
     .summary table {
@@ -47,14 +45,9 @@
       color: var(--text);
       border-bottom: 1px solid #444;
     }
-    .summary tbody tr:hover {
-      background: var(--row-hover);
-    }
 
     /* Add Farm */
-    .add-farm-btn {
-      margin-bottom: 12px;
-    }
+    .add-farm-btn { margin-bottom: 12px; }
     .add-farm-btn button {
       padding: 8px 12px;
       background: #3498db;
@@ -96,9 +89,7 @@
       align-items: center;
       font-size: 0.9rem;
     }
-    .alarms-list input {
-      margin-right: 6px;
-    }
+    .alarms-list input { margin-right: 6px; }
     #addFarmForm .buttons {
       text-align: right;
     }
@@ -111,9 +102,7 @@
     }
 
     /* Search & Overview */
-    .search {
-      margin-bottom: 12px;
-    }
+    .search { margin-bottom: 12px; }
     .search input {
       width: 100%;
       padding: 8px 12px;
@@ -136,9 +125,7 @@
       color: var(--text);
       border-bottom: 1px solid #444;
     }
-    tbody.overview tr:hover {
-      background: var(--row-hover);
-    }
+    tbody.overview tr:hover { background: var(--row-hover); }
     .dot {
       display: inline-block;
       width: 10px;
@@ -158,9 +145,7 @@
       width: 100%;
       height: 100%;
     }
-    td.comment {
-      min-width: 120px;
-    }
+    td.comment { min-width: 120px; }
     td.actions button {
       padding: 4px 8px;
       background: #3498db;
@@ -188,7 +173,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>Tatua</h1>
+    <h1>Dairy Farm Alerts Overview</h1>
 
     <!-- Summary Table -->
     <div class="summary">
@@ -203,7 +188,9 @@
             <th>Inactive Devices</th>
           </tr>
         </thead>
-        <tbody id="summary-body"></tbody>
+        <tbody id="summary-body">
+          <!-- filled by JS -->
+        </tbody>
       </table>
     </div>
 
@@ -305,25 +292,26 @@
 
     let farmsList = loadFarms();
 
-    // Render Summary Table
-    function renderSummary(farms){
+    // Render Summary
+    function renderSummary(){
       const sb = document.getElementById('summary-body');
-      sb.innerHTML = '';
-      farms.forEach(f=>{
-        const name = f.name||f.supplier;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${name}</td>
+      const totalGateways  = farmsList.length;
+      const sensorsPerFarm = 4;
+      const totalDevices   = farmsList.length * sensorsPerFarm;
+      const activeDevices  = totalDevices; // assume all active
+      const inactiveDevices= 0;
+      sb.innerHTML = `
+        <tr>
+          <td>All Farms</td>
           <td>Active</td>
-          <td>1</td>
-          <td>4</td>
-          <td>4</td>
-          <td>0</td>
-        `;
-        sb.appendChild(tr);
-      });
+          <td>${totalGateways}</td>
+          <td>${totalDevices}</td>
+          <td>${activeDevices}</td>
+          <td>${inactiveDevices}</td>
+        </tr>
+      `;
     }
-    renderSummary(farmsList);
+    renderSummary();
 
     // Build overview data
     function makeOverview(f){
@@ -345,7 +333,7 @@
         return sev[b.status]-sev[a.status];
       });
 
-    // Render Overview Table
+    // Render Overview
     function renderOverview(rows){
       const tb = document.getElementById('overview-body');
       tb.innerHTML = '';
@@ -395,7 +383,7 @@
         );
       });
 
-    // Add Farm form
+    // Add Farm form logic
     const showBtn     = document.getElementById('showAddForm');
     const formDiv     = document.getElementById('addFarmForm');
     const cancelBtn   = document.getElementById('cancelAdd');
@@ -424,14 +412,14 @@
       if(farmsList.some(f=>f.supplier===sup)){
         alert('This supplier already exists'); return;
       }
-      const selected = [];
+      const selected=[]
       alarmChkDiv.querySelectorAll('input:checked')
-        .forEach(cb=> selected.push(cb.value));
-      const newFarm = { supplier:sup, name:nm, activeAlarms:selected };
+        .forEach(cb=>selected.push(cb.value));
+      const newFarm={ supplier:sup, name:nm, activeAlarms:selected };
       farmsList.push(newFarm);
       saveFarms(farmsList);
-      renderSummary(farmsList);
-      overviewData = farmsList
+      renderSummary();
+      overviewData=farmsList
         .map(makeOverview)
         .sort((a,b)=>({Critical:3,Warning:2,Info:1,Ok:0}[b.status]
                      -({Critical:3,Warning:2,Info:1,Ok:0}[a.status])));
