@@ -30,6 +30,28 @@
     h1 {
       margin-bottom: 12px;
     }
+
+    /* Summary table */
+    .summary table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .summary thead {
+      background: var(--header-bg);
+    }
+    .summary th, .summary td {
+      padding: 8px;
+      font-size: 0.9rem;
+      text-align: left;
+      color: var(--text);
+      border-bottom: 1px solid #444;
+    }
+    .summary tbody tr:hover {
+      background: var(--row-hover);
+    }
+
+    /* Add Farm */
     .add-farm-btn {
       margin-bottom: 12px;
     }
@@ -87,6 +109,8 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
+    /* Search & Overview */
     .search {
       margin-bottom: 12px;
     }
@@ -98,21 +122,21 @@
       background: #2c2c2c;
       color: var(--text);
     }
-    table {
+    table.overview {
       width: 100%;
       border-collapse: collapse;
     }
-    thead {
+    thead.overview {
       background: var(--header-bg);
     }
-    th, td {
+    th.overview, td.overview {
       padding: 10px;
       text-align: left;
       font-size: 0.95rem;
       color: var(--text);
       border-bottom: 1px solid #444;
     }
-    tbody tr:hover {
+    tbody.overview tr:hover {
       background: var(--row-hover);
     }
     .dot {
@@ -127,7 +151,7 @@
     .status-warning  .dot { background: var(--warning); }
     .status-info     .dot { background: var(--info); }
     .status-critical .dot { background: var(--critical); }
-    table a {
+    table.overview a {
       color: var(--text) !important;
       text-decoration: none;
       display: block;
@@ -145,6 +169,8 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
+    /* Footer */
     .footer-btn {
       text-align: center;
       margin-top: 20px;
@@ -163,6 +189,23 @@
 <body>
   <div class="container">
     <h1>Tatua</h1>
+
+    <!-- Summary Table -->
+    <div class="summary">
+      <table>
+        <thead>
+          <tr>
+            <th>Organisation Name</th>
+            <th>Organisation Status</th>
+            <th>Total Gateways</th>
+            <th>Total Devices</th>
+            <th>Active Devices</th>
+            <th>Inactive Devices</th>
+          </tr>
+        </thead>
+        <tbody id="summary-body"></tbody>
+      </table>
+    </div>
 
     <!-- Add Farm Button -->
     <div class="add-farm-btn">
@@ -193,16 +236,16 @@
     </div>
 
     <!-- Overview Table -->
-    <table>
-      <thead>
+    <table class="overview">
+      <thead class="overview">
         <tr>
-          <th>Supplier #</th>
-          <th>Farm Name</th>
-          <th>Status</th>
-          <th>Alarm Name</th>
-          <th>Time Triggered</th>
-          <th>Comments</th>
-          <th>Actions</th>
+          <th class="overview">Supplier #</th>
+          <th class="overview">Farm Name</th>
+          <th class="overview">Status</th>
+          <th class="overview">Alarm Name</th>
+          <th class="overview">Time Triggered</th>
+          <th class="overview">Comments</th>
+          <th class="overview">Actions</th>
         </tr>
       </thead>
       <tbody id="overview-body"></tbody>
@@ -215,7 +258,7 @@
   </div>
 
   <script>
-    // The eight alarm types
+    // Alarm types
     const ALARMS = [
       'Milk Collection',
       'Plate Cooler Fault',
@@ -227,7 +270,7 @@
       'temperature fault'
     ];
 
-    // Pre-configured critical/warning history
+    // Pre-configured event history
     const historyCfg = {
       '12345': {criticalOn:null, warningOn:null},
       '52440': {criticalOn:null, warningOn:null},
@@ -241,47 +284,69 @@
       '55678': {criticalOn:null, warningOn:null}
     };
 
+    // LocalStorage key
     const LS_FARMS = 'farms';
 
-    function loadFarms() {
-      let f = JSON.parse(localStorage.getItem(LS_FARMS) || 'null');
-      if (!f) {
-        f = Object.keys(historyCfg).map(s => ({
-          supplier: s,
-          name: '',
-          activeAlarms: [...ALARMS]
+    function loadFarms(){
+      let f = JSON.parse(localStorage.getItem(LS_FARMS)||'null');
+      if(!f){
+        f = Object.keys(historyCfg).map(s=>({
+          supplier:s,
+          name:'',
+          activeAlarms:[...ALARMS]
         }));
         localStorage.setItem(LS_FARMS, JSON.stringify(f));
       }
       return f;
     }
-    function saveFarms(f) {
+    function saveFarms(f){
       localStorage.setItem(LS_FARMS, JSON.stringify(f));
     }
 
     let farmsList = loadFarms();
 
-    function makeOverview(f) {
-      const cfg = historyCfg[f.supplier] || {};
+    // Render Summary Table
+    function renderSummary(farms){
+      const sb = document.getElementById('summary-body');
+      sb.innerHTML = '';
+      farms.forEach(f=>{
+        const name = f.name||f.supplier;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${name}</td>
+          <td>Active</td>
+          <td>1</td>
+          <td>4</td>
+          <td>4</td>
+          <td>0</td>
+        `;
+        sb.appendChild(tr);
+      });
+    }
+    renderSummary(farmsList);
+
+    // Build overview data
+    function makeOverview(f){
+      const cfg = historyCfg[f.supplier]||{};
       let status='Ok', alarmName='', time='', comment='';
-      if (cfg.criticalOn) {
+      if(cfg.criticalOn){
         status='Critical'; alarmName='temperature fault';
         time=cfg.criticalOn; comment='Immediate attention required';
-      } else if (cfg.warningOn) {
+      } else if(cfg.warningOn){
         status='Warning'; alarmName='Battery Low Alarm';
         time=cfg.warningOn;
       }
       return {...f, status, alarmName, time, comment};
     }
-
     let overviewData = farmsList
       .map(makeOverview)
       .sort((a,b)=>{
         const sev={Critical:3,Warning:2,Info:1,Ok:0};
-        return sev[b.status] - sev[a.status];
+        return sev[b.status]-sev[a.status];
       });
 
-    function renderOverview(rows) {
+    // Render Overview Table
+    function renderOverview(rows){
       const tb = document.getElementById('overview-body');
       tb.innerHTML = '';
       rows.forEach(r=>{
@@ -324,21 +389,21 @@
     // Live search
     document.getElementById('search')
       .addEventListener('input', e=>{
-        const q = e.target.value.trim();
+        const q=e.target.value.trim();
         renderOverview(
-          overviewData.filter(r=> r.supplier.includes(q))
+          overviewData.filter(r=>r.supplier.includes(q))
         );
       });
 
-    // Add Farm form logic
-    const showBtn = document.getElementById('showAddForm');
-    const formDiv = document.getElementById('addFarmForm');
-    const cancelBtn = document.getElementById('cancelAdd');
-    const saveBtn   = document.getElementById('saveAdd');
+    // Add Farm form
+    const showBtn     = document.getElementById('showAddForm');
+    const formDiv     = document.getElementById('addFarmForm');
+    const cancelBtn   = document.getElementById('cancelAdd');
+    const saveBtn     = document.getElementById('saveAdd');
     const alarmChkDiv = document.getElementById('alarmsCheckboxes');
 
     showBtn.onclick = ()=>{
-      formDiv.style.display = 'block';
+      formDiv.style.display='block';
       alarmChkDiv.innerHTML = '';
       ALARMS.forEach(name=>{
         const id = `chk_${name.replace(/\s+/g,'')}`;
@@ -350,29 +415,30 @@
         `;
       });
     };
-    cancelBtn.onclick = ()=> formDiv.style.display = 'none';
+    cancelBtn.onclick = ()=> formDiv.style.display='none';
 
     saveBtn.onclick = ()=>{
       const sup = document.getElementById('newSupplier').value.trim();
       const nm  = document.getElementById('newFarmName').value.trim();
-      if(!sup) { alert('Supplier # required'); return; }
+      if(!sup){ alert('Supplier # required'); return; }
       if(farmsList.some(f=>f.supplier===sup)){
-        alert('This supplier already exists');
-        return;
+        alert('This supplier already exists'); return;
       }
       const selected = [];
       alarmChkDiv.querySelectorAll('input:checked')
         .forEach(cb=> selected.push(cb.value));
-      const newFarm = { supplier: sup, name: nm, activeAlarms: selected };
+      const newFarm = { supplier:sup, name:nm, activeAlarms:selected };
       farmsList.push(newFarm);
       saveFarms(farmsList);
+      renderSummary(farmsList);
       overviewData = farmsList
         .map(makeOverview)
-        .sort((a,b)=> ({Critical:3,Warning:2,Info:1,Ok:0}[b.status] - ({Critical:3,Warning:2,Info:1,Ok:0}[a.status])));
+        .sort((a,b)=>({Critical:3,Warning:2,Info:1,Ok:0}[b.status]
+                     -({Critical:3,Warning:2,Info:1,Ok:0}[a.status])));
       renderOverview(overviewData);
-      formDiv.style.display = 'none';
-      document.getElementById('newSupplier').value = '';
-      document.getElementById('newFarmName').value = '';
+      formDiv.style.display='none';
+      document.getElementById('newSupplier').value='';
+      document.getElementById('newFarmName').value='';
     };
   </script>
 </body>
