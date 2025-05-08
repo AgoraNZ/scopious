@@ -9,8 +9,7 @@
       --bg: #1e1e1e;
       --panel-bg: #222;
       --text: #f5f5f5;
-      --grid-gap: 12px;
-      --panel-border: #444;
+      --border: #444;
     }
     * { box-sizing: border-box; }
     body {
@@ -21,7 +20,7 @@
       max-width:1000px; margin:20px auto; padding:0 16px;
     }
     button {
-      background: #2c2c2c; border:none;
+      background:#2c2c2c; border:none;
       color:var(--text); padding:8px 12px;
       border-radius:4px; cursor:pointer;
       margin-bottom:12px;
@@ -30,42 +29,35 @@
     .grid {
       display:grid;
       grid-template-columns:repeat(4,1fr);
-      grid-auto-rows: 180px;
-      gap: var(--grid-gap);
+      grid-auto-rows:180px;
+      gap:12px;
     }
     .panel {
-      background: var(--panel-bg);
-      border:1px solid var(--panel-border);
-      border-radius:6px;
-      padding:10px;
-      position: relative;
-      overflow: hidden;
+      background:var(--panel-bg);
+      border:1px solid var(--border);
+      border-radius:6px; padding:10px;
+      position:relative; overflow:hidden;
     }
     .panel .title {
       font-size:0.9rem; color:#ccc;
       margin-bottom:4px;
     }
     .panel .value {
-      position:absolute;
-      top:40%;
-      left:50%;
+      position:absolute; top:40%; left:50%;
       transform:translate(-50%,-40%);
-      font-size:2.5rem;
-      font-weight:300;
+      font-size:2.5rem; font-weight:300;
       pointer-events:none;
     }
     .panel canvas {
-      position:absolute;
-      bottom:0; left:0;
-      width:100%; height:50%;
-      opacity:0.5;
+      position:absolute; bottom:0; left:0;
+      width:100%; height:50%; opacity:0.5;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
-    <button onclick="history.back()">← Back</button>
+    <button onclick="history.back()">← Back to Overview</button>
     <h1 id="dash-title">Sensor Dashboard</h1>
     <div class="grid">
       <div class="panel">
@@ -107,49 +99,32 @@
   </div>
 
   <script>
-    // get farm#
     const params = new URLSearchParams(location.search);
     const farm = params.get('supplier') || 'Unknown';
-    document.getElementById('dash-title').textContent = `Dashboard – Farm ${farm}`;
+    document.getElementById('dash-title')
+      .textContent = `Dashboard – Farm ${farm}`;
 
-    // helper to build a tiny line chart
-    function makeChart(canvasId, dataPoints, color) {
-      new Chart(document.getElementById(canvasId), {
-        type: 'line',
-        data: {
-          datasets: [{
-            data: dataPoints,
-            fill: false,
-            borderColor: color,
-            borderWidth: 1.5,
-            pointRadius: 0
-          }]
-        },
-        options: {
-          animation: false,
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { type: 'time', display: false },
-            y: { display: false }
-          },
-          plugins: { legend:false, tooltip:false }
+    function makeChart(id, pts) {
+      new Chart(document.getElementById(id), {
+        type:'line',
+        data:{ datasets:[{ data:pts, fill:false, borderColor:'#2ecc71', borderWidth:1.5, pointRadius:0 }]},
+        options:{
+          animation:false, responsive:true,
+          maintainAspectRatio:false,
+          scales:{ x:{display:false}, y:{display:false} },
+          plugins:{ legend:false, tooltip:false }
         }
       });
     }
 
-    // sample times
-    const now = Date.now();
-    const past = now - 6*3600*1000; // 6h ago
-
-    // build 7 charts
-    makeChart('c1', [{x:past,y:2.5},{x:now,y:0.4}],  '#2ecc71');
-    makeChart('c2', [{x:past,y:15},{x:now,y:13.5}], '#2ecc71');
-    makeChart('c3', [{x:past,y:20.5},{x:now,y:18}],  '#2ecc71');
-    makeChart('c4', [{x:past,y:21.2},{x:now,y:21.3}], '#2ecc71');
-    makeChart('c5', [{x:past,y:2225},{x:now,y:2224.93}], '#2ecc71');
-    makeChart('c6', [{x:past,y:3340},{x:now,y:3343.03}], '#2ecc71');
-    makeChart('c7', [{x:past,y:3720},{x:now,y:3722.98}], '#2ecc71');
+    const now = Date.now(), past = now - 6*3600*1000;
+    makeChart('c1', [{x:past,y:2.5},{x:now,y:0.4}]);
+    makeChart('c2', [{x:past,y:15},{x:now,y:13.5}]);
+    makeChart('c3', [{x:past,y:20.5},{x:now,y:18}]);
+    makeChart('c4', [{x:past,y:21.2},{x:now,y:21.3}]);
+    makeChart('c5', [{x:past,y:2225},{x:now,y:2224.93}]);
+    makeChart('c6', [{x:past,y:3340},{x:now,y:3343.03}]);
+    makeChart('c7', [{x:past,y:3720},{x:now,y:3722.98}]);
   </script>
 </body>
 </html>
