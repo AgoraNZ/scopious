@@ -52,6 +52,24 @@
       position:absolute; bottom:0; left:0;
       width:100%; height:50%; opacity:0.5;
     }
+
+    /* new historical chart styling */
+    .historical-section {
+      margin-top:30px;
+      background: var(--panel-bg);
+      border:1px solid var(--border);
+      border-radius:6px;
+      padding:16px;
+    }
+    .historical-section h2 {
+      margin:0 0 12px;
+      font-size:1.1rem;
+      color:#ccc;
+    }
+    .historical-section canvas {
+      width:100% !important;
+      height:300px !important;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -59,6 +77,8 @@
   <div class="container">
     <button onclick="history.back()">← Back to Overview</button>
     <h1 id="dash-title">Sensor Dashboard</h1>
+
+    <!-- existing 7 panels -->
     <div class="grid">
       <div class="panel">
         <div class="title">Current – Channel 1</div>
@@ -96,6 +116,12 @@
         <canvas id="c7"></canvas>
       </div>
     </div>
+
+    <!-- new historical data section -->
+    <div class="historical-section">
+      <h2>Historical Data</h2>
+      <canvas id="historical-chart"></canvas>
+    </div>
   </div>
 
   <script>
@@ -125,6 +151,66 @@
     makeChart('c5', [{x:past,y:2225},{x:now,y:2224.93}]);
     makeChart('c6', [{x:past,y:3340},{x:now,y:3343.03}]);
     makeChart('c7', [{x:past,y:3720},{x:now,y:3722.98}]);
+
+    // ---- historical chart ----
+    const histCtx = document.getElementById('historical-chart').getContext('2d');
+    // sample multi-line data for two channels
+    const histData = {
+      datasets: [
+        {
+          label: 'Channel 1 Current',
+          data: [
+            {x: past, y: 0.5}, {x: past + 2e6, y: 1.0},
+            {x: past + 4e6, y: 0.8}, {x: now, y: 0.4}
+          ],
+          borderColor: '#1abc9c', fill: false, tension:0.3
+        },
+        {
+          label: 'Channel 2 Current',
+          data: [
+            {x: past, y: 14}, {x: past + 2e6, y: 14.5},
+            {x: past + 4e6, y: 14}, {x: now, y: 13.5}
+          ],
+          borderColor: '#9b59b6', fill: false, tension:0.3
+        },
+        {
+          label: 'Temperature',
+          data: [
+            {x: past, y: 21.0}, {x: past + 2e6, y: 21.1},
+            {x: past + 4e6, y: 21.2}, {x: now, y: 21.3}
+          ],
+          borderColor: '#e74c3c', fill: false, tension:0.3
+        }
+      ]
+    };
+    const histOpts = {
+      responsive: true,
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'day', tooltipFormat: 'MMM dd HH:mm' },
+          grid: { color: '#333' },
+          ticks: { color: '#bbb' }
+        },
+        y: {
+          grid: { color: '#333' },
+          ticks: { color: '#bbb' }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: { color: '#f5f5f5' }
+        },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      interaction: { mode: 'nearest', axis: 'x', intersect: false }
+    };
+
+    new Chart(histCtx, {
+      type: 'line',
+      data: histData,
+      options: histOpts
+    });
   </script>
 </body>
 </html>
