@@ -111,44 +111,34 @@
     .card--info     { border-left:4px solid var(--info); }
     .card--critical { border-left:4px solid var(--critical); }
     .card .supplier {
-      font-weight:bold;
-      margin-bottom:8px;
+      font-weight:bold; margin-bottom:8px;
     }
     .card .supplier a {
       color:var(--text); text-decoration:none;
     }
-    .card .status {
-      margin-bottom:8px;
-    }
+    .card .status { margin-bottom:8px; }
     .badge {
-      display:inline-block;
-      padding:4px 8px;
-      border-radius:12px;
-      font-size:0.85rem;
+      display:inline-block; padding:4px 8px;
+      border-radius:12px; font-size:0.85rem;
       color:#fff;
     }
     .badge-ok       { background:var(--ok); }
     .badge-warning  { background:var(--warning); }
     .badge-info     { background:var(--info); }
     .badge-critical { background:var(--critical); }
-    .card .alarm-name,
-    .card .time {
-      margin-bottom:6px;
-      font-size:0.9rem;
+    .card .alarm-name, .card .time {
+      margin-bottom:6px; font-size:0.9rem;
     }
-    .card .alarm-name a,
-    .card .time a {
+    .card .alarm-name a, .card .time a {
       color:var(--text); text-decoration:none;
     }
     .card .comment {
-      font-size:0.85rem;
-      color:var(--text);
+      font-size:0.85rem; color:var(--text);
       min-height:1.2em;
     }
     .card .comment[contenteditable] {
       background:rgba(255,255,255,0.05);
       padding:4px; border-radius:4px;
-      outline:none;
       cursor:text;
     }
 
@@ -261,21 +251,23 @@
     function renderSummary(){
       const sb = document.getElementById('summary-body');
       const gw = farms.length;
-      const devPer = 4;
-      const totDev = gw*devPer;
-      sb.innerHTML = `<tr>
-        <td>All Farms</td>
-        <td>Active</td>
-        <td>${gw}</td>
-        <td>${totDev}</td>
-        <td>${totDev}</td>
-        <td>0</td>
-      </tr>`;
+      const perFarm = 4;
+      const totalDev = gw*perFarm;
+      sb.innerHTML = `
+        <tr>
+          <td>All Farms</td>
+          <td>Active</td>
+          <td>${gw}</td>
+          <td>${totalDev}</td>
+          <td>${totalDev}</td>
+          <td>0</td>
+        </tr>`;
     }
     renderSummary();
 
-    // Build grid data
-    function makeCardData(f){
+    // Build and sort cards
+    const severity = { 'Critical':3, 'Warning':2, 'Info':1, 'Ok':0 };
+    function makeCard(f){
       const cfg = historyCfg[f.supplier]||{};
       let status='Ok', alarm='', time='', comment='';
       if(cfg.criticalOn){
@@ -286,15 +278,19 @@
         status='Warning'; alarm='Battery Low Alarm';
         time=cfg.warningOn;
       }
-      return {...f, status, alarm, time, comment};
+      return { ...f, status, alarm, time, comment };
     }
-    let cards = farms.map(makeCardData);
+    function sortedCards(){
+      return farms
+        .map(makeCard)
+        .sort((a,b)=> severity[b.status] - severity[a.status]);
+    }
 
     // Render grid
-    function renderGrid(items){
+    function renderGrid(list){
       const grid = document.getElementById('overview-grid');
       grid.innerHTML = '';
-      items.forEach(r=>{
+      list.forEach(r=>{
         const card = document.createElement('div');
         card.className = `card card--${r.status.toLowerCase()}`;
         const editable = r.status==='Critical'?'contenteditable':'';
@@ -319,30 +315,29 @@
               ${r.time}
             </a>
           </div>
-          <div class="comment" ${editable}>
-            ${r.comment}
-          </div>
+          <div class="comment" ${editable}>${r.comment}</div>
         `;
         grid.appendChild(card);
       });
     }
-    renderGrid(cards);
+    // initial render
+    renderGrid(sortedCards());
 
-    // Search
+    // Live search (preserves severity sort)
     document.getElementById('search')
-      .addEventListener('input',e=>{
-        const q=e.target.value.trim();
+      .addEventListener('input', e=>{
+        const q = e.target.value.trim();
         renderGrid(
-          cards.filter(c=>c.supplier.includes(q))
+          sortedCards().filter(c => c.supplier.includes(q))
         );
       });
 
-    // Add Farm form:
+    // Add Farm form logic
     const showBtn = document.getElementById('showAddForm');
     const formDiv = document.getElementById('addFarmForm');
     const cancelBtn = document.getElementById('cancelAdd');
-    const saveBtn = document.getElementById('saveAdd');
-    const chkDiv   = document.getElementById('alarmsCheckboxes');
+    const saveBtn   = document.getElementById('saveAdd');
+    const chkDiv    = document.getElementById('alarmsCheckboxes');
 
     showBtn.onclick = ()=>{
       formDiv.style.display='block';
@@ -362,15 +357,16 @@
       const sup = document.getElementById('newSupplier').value.trim();
       const nm  = document.getElementById('newFarmName').value.trim();
       if(!sup){ alert('Supplier# required'); return; }
-      if(farms.some(f=>f.supplier===sup)){ alert('Exists');return; }
-      const act = [];
+      if(farms.some(f=>f.supplier===sup)){
+        alert('Already exists'); return;
+      }
+      const act=[];
       chkDiv.querySelectorAll('input:checked')
         .forEach(cb=>act.push(cb.value));
-      const nf={supplier:sup,name:nm,activeAlarms:act};
-      farms.push(nf); saveFarms(farms);
+      farms.push({supplier:sup,name:nm,activeAlarms:act});
+      saveFarms(farms);
       renderSummary();
-      cards = farms.map(makeCardData);
-      renderGrid(cards);
+      renderGrid(sortedCards());
       formDiv.style.display='none';
       document.getElementById('newSupplier').value='';
       document.getElementById('newFarmName').value='';
