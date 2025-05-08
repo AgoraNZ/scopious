@@ -12,31 +12,20 @@
       --info:#3498db; --critical:#e74c3c;
     }
     *{box-sizing:border-box;}
-    body{
-      margin:0;font-family:sans-serif;
-      background:var(--bg);color:var(--text);
-    }
-    .container{
-      max-width:900px;
-      margin:20px auto;
-      padding:0 16px;
-    }
-    button{
-      background:#2c2c2c;border:none;
+    body{margin:0;font-family:sans-serif;
+      background:var(--bg);color:var(--text);}
+    .container{max-width:900px;margin:20px auto;padding:0 16px;}
+    button{background:#2c2c2c;border:none;
       color:var(--text);padding:8px 12px;
       border-radius:4px;cursor:pointer;
-      margin-bottom:12px;
-    }
+      margin-bottom:12px;}
     h1{margin:12px 0;}
-    .filters{
-      display:flex;gap:12px;
-      margin-bottom:12px;
-    }
+    .filters{display:flex;gap:12px;margin-bottom:12px;}
     .filters select,
     .filters input[type=date]{
       padding:6px 8px;border:none;
-      border-radius:4px;
-      background:#2c2c2c;color:var(--text);
+      border-radius:4px;background:#2c2c2c;
+      color:var(--text);
     }
     table{width:100%;border-collapse:collapse;}
     thead{background:var(--header-bg);}
@@ -46,23 +35,28 @@
     }
     tbody tr{border-top:1px solid #444;}
     tbody tr:hover{background:var(--row-hover);}
-    .dot{
-      display:inline-block;width:10px;height:10px;
-      border-radius:50%;margin-right:6px;
-      vertical-align:middle;
-    }
+    .dot{display:inline-block;width:10px;height:10px;
+      border-radius:50%;margin-right:6px;vertical-align:middle;}
     .status-ok       .dot{background:var(--ok);}
     .status-warning  .dot{background:var(--warning);}
     .status-info     .dot{background:var(--info);}
     .status-critical .dot{background:var(--critical);}
     a{color:var(--text)!important;text-decoration:none;}
     td.comment{min-width:120px;}
+    .footer-btn { text-align:center; margin-top:20px; }
+    .footer-btn button {
+      padding:10px 20px; font-size:1rem;
+      border:none; border-radius:4px;
+      background:#3498db; color:#fff;
+      cursor:pointer;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <button onclick="window.location.href='index.html'">← Back</button>
+    <button onclick="window.location.href='index.html'">← Back to Overview</button>
     <h1 id="farm-title">Farm Alarms</h1>
+
     <div class="filters">
       <select id="typeFilter">
         <option value="">All Alarm Types</option>
@@ -70,6 +64,7 @@
       <input type="date" id="fromDate"/>
       <input type="date" id="toDate"/>
     </div>
+
     <table>
       <thead>
         <tr>
@@ -81,13 +76,17 @@
       </thead>
       <tbody id="detail-body"></tbody>
     </table>
+
+    <div class="footer-btn">
+      <button onclick="window.location.href='rules.html'">Create Alarm / Rule</button>
+    </div>
   </div>
 
   <script>
     const ALARMS = {
-      info: ['Milk Collection','Vat Hot Wash'],
+      info:    ['Milk Collection','Vat Hot Wash'],
       warning: ['Battery Low Alarm'],
-      critical: ['Plate Cooler Fault','Agitator Fault','Vat Chiller Compressor Fault']
+      critical:['Plate Cooler Fault','Agitator Fault','Vat Chiller Compressor Fault']
     };
     const historyCfg = {
       '12345': { criticalOn:null, warningOn:null },
@@ -102,13 +101,11 @@
       '55678': { criticalOn:null, warningOn:null }
     };
 
-    // get farm
     const params = new URLSearchParams(location.search);
     const farm = params.get('supplier') || 'Unknown';
     document.getElementById('farm-title')
       .textContent = `Farm ${farm} Alarms`;
 
-    // build 10 days, then filter out Ok
     function buildRows(sup) {
       const cfg = historyCfg[sup] || {};
       const arr = [];
@@ -130,16 +127,13 @@
           status='Info';
           alarmName=ALARMS.info[i%2];
         }
-        else{
-          status='Ok';
-          alarmName='';
-        }
+        else { continue; } // skip Ok
         arr.push({status,alarmName,time:ts,comment});
       }
-      return arr.filter(r=>r.status!=='Ok');
+      return arr;
     }
 
-    const rows=buildRows(farm);
+    const rows = buildRows(farm);
 
     // populate filter
     const typeSel=document.getElementById('typeFilter');
@@ -150,8 +144,8 @@
     });
 
     function renderDetails(data){
-      const tbody=document.getElementById('detail-body');
-      tbody.innerHTML='';
+      const tb=document.getElementById('detail-body');
+      tb.innerHTML='';
       data.forEach(r=>{
         const tr=document.createElement('tr');
         tr.innerHTML=`
@@ -164,10 +158,9 @@
             ${r.status==='Critical'?r.comment:''}
           </td>
         `;
-        tbody.appendChild(tr);
+        tb.appendChild(tr);
       });
     }
-
     renderDetails(rows);
 
     function applyFilters(){
@@ -175,12 +168,11 @@
       const t=typeSel.value;
       const f=document.getElementById('fromDate').value;
       const to=document.getElementById('toDate').value;
-      if(t)   out=out.filter(r=>r.alarmName===t);
-      if(f)   out=out.filter(r=>r.time>=f);
-      if(to)  out=out.filter(r=>r.time<=to+' 23:59');
+      if(t)  out=out.filter(r=>r.alarmName===t);
+      if(f)  out=out.filter(r=>r.time>=f);
+      if(to) out=out.filter(r=>r.time<=to+' 23:59');
       renderDetails(out);
     }
-
     typeSel.addEventListener('change',applyFilters);
     document.getElementById('fromDate').addEventListener('change',applyFilters);
     document.getElementById('toDate').addEventListener('change',applyFilters);
