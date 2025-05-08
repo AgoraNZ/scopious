@@ -76,121 +76,98 @@
   </div>
 
   <script>
-    // 1) exact eight alarm names
-    const ALARMS = [
-      'Milk Collection',
-      'Plate Cooler Fault',
-      'Vat Chiller Compressor Fault',
-      'Agitator Fault',
-      'Vat Hot Wash',
-      'Battery Low Alarm',
-      'Chiller Condition',
-      'temperature fault'
-    ];
-
-    // 2) same history map as alarm.html
-    const history = {
-      '12345': { criticalAt: null,          warningAt: null },
-      '52440': { criticalAt: null,          warningAt: null },
-      '44074': { criticalAt: '2025-05-06 05:39', warningAt: null },
-      '35421': { criticalAt: null,          warningAt: null },
-      '98765': { criticalAt: null,          warningAt: '2025-05-04 10:30' },
-      '24680': { criticalAt: null,          warningAt: null },
-      '13579': { criticalAt: null,          warningAt: null },
-      '11223': { criticalAt: null,          warningAt: null },
-      '99887': { criticalAt: '2025-04-30 12:50', warningAt: null },
-      '55678': { criticalAt: null,          warningAt: null }
+    const ALARMS = {
+      info: ['Milk Collection', 'Vat Hot Wash'],
+      warning: ['Battery Low Alarm'],
+      critical: ['Plate Cooler Fault','Agitator Fault','Vat Chiller Compressor Fault']
+    };
+    // per-farm history config (only two farms have a critical; one farm a warning)
+    const historyCfg = {
+      '12345': { criticalOn: null,          warningOn: null },
+      '52440': { criticalOn: null,          warningOn: null },
+      '44074': { criticalOn: '2025-05-06 05:39', warningOn: null },
+      '35421': { criticalOn: null,          warningOn: null },
+      '98765': { criticalOn: null,          warningOn: '2025-05-04 10:30' },
+      '24680': { criticalOn: null,          warningOn: null },
+      '13579': { criticalOn: null,          warningOn: null },
+      '11223': { criticalOn: null,          warningOn: null },
+      '99887': { criticalOn: '2025-04-30 12:50', warningOn: null },
+      '55678': { criticalOn: null,          warningOn: null }
     };
 
-    // 3) buildRows() as in alarm.html
+    // build 10 days for each farm
     function buildRows(sup) {
-      const cfg = history[sup] || {};
+      const cfg = historyCfg[sup] || {};
       const rows = [];
-      for (let i = 0; i < 10; i++) {
+      for (let i=0; i<10; i++) {
         const d = new Date();
-        d.setDate(d.getDate() - i);
+        d.setDate(d.getDate()-i);
         const ts = d.toISOString().replace('T',' ').slice(0,16);
+        let status, alarmName, comment='';
 
-        let status, alarmName, comment = '';
-        if (cfg.criticalAt === ts) {
-          status = 'Critical';
-          alarmName = ALARMS[7];
-          comment = 'Immediate attention required';
-        } else if (cfg.warningAt === ts) {
-          status = 'Warning';
-          alarmName = ALARMS[5];
-        } else if (i % 3 === 0) {
-          status = 'Info';
-          alarmName = ALARMS[0];
-        } else {
-          status = 'Ok';
-          alarmName = ALARMS[1 + (i % 6)];
+        if (cfg.criticalOn === ts) {
+          status='Critical';
+          alarmName= ALARMS.critical[0]; // first critical
+          comment='Immediate attention required';
+        }
+        else if (cfg.warningOn === ts) {
+          status='Warning';
+          alarmName= ALARMS.warning[0];
+        }
+        else if (i % 3 === 0) {
+          status='Info';
+          alarmName= ALARMS.info[i%2];
+        }
+        else {
+          status='Ok';
+          alarmName=''; 
         }
 
-        rows.push({ supplier: sup, status, alarmName, time: ts, comment });
+        rows.push({ supplier:sup, status, alarmName, time: status==='Ok'? '':ts, comment });
       }
       return rows;
     }
 
-    // 4) overviewData is just the latest row for each supplier
-    const suppliers = Object.keys(history);
-    const overviewData = suppliers.map(sup => {
+    // latest event per farm
+    const suppliers = Object.keys(historyCfg);
+    let overviewData = suppliers.map(sup => {
       const latest = buildRows(sup)[0];
       return {
-        supplier: sup,
-        status:    latest.status,
-        alarmName: latest.alarmName,
-        time:      latest.time,
-        comment:   latest.status === 'Critical' ? latest.comment : ''
+        ...latest
       };
     });
 
-    // severity ordering
-    const severity = { 'Critical':3, 'Warning':2, 'Info':1, 'Ok':0 };
+    // sort by severity
+    const sevOrder = { 'Critical':3,'Warning':2,'Info':1,'Ok':0 };
+    overviewData.sort((a,b)=> sevOrder[b.status] - sevOrder[a.status]);
 
-    // render
     function renderOverview(rows) {
       const tbody = document.getElementById('overview-body');
       tbody.innerHTML = '';
-      rows.forEach(r => {
+      rows.forEach(r=>{
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="supplier">
-            <a href="dashboard.html?supplier=${r.supplier}">${r.supplier}</a>
-          </td>
+        tr.innerHTML=`
+          <td><a href="dashboard.html?supplier=${r.supplier}">${r.supplier}</a></td>
           <td class="status-${r.status.toLowerCase()}">
             <a href="alarm.html?supplier=${r.supplier}">
               <span class="dot"></span>${r.status}
             </a>
           </td>
-          <td class="alarmName">
-            <a href="alarm.html?supplier=${r.supplier}">
-              ${r.alarmName}
-            </a>
-          </td>
-          <td class="time">
-            <a href="alarm.html?supplier=${r.supplier}">
-              ${r.time}
-            </a>
-          </td>
-          <td class="comment">${r.comment}</td>
+          <td><a href="alarm.html?supplier=${r.supplier}">${r.alarmName}</a></td>
+          <td><a href="alarm.html?supplier=${r.supplier}">${r.time}</a></td>
+          <td class="comment">${r.status==='Critical'?r.comment:''}</td>
         `;
         tbody.appendChild(tr);
       });
     }
-
-    // initial sort & render
-    const sorted = overviewData
-      .slice()
-      .sort((a,b) => severity[b.status] - severity[a.status]);
-    renderOverview(sorted);
+    renderOverview(overviewData);
 
     // live filter
     document.getElementById('search')
-      .addEventListener('input', e => {
-        const q = e.target.value.trim();
+      .addEventListener('input', e=>{
+        const q=e.target.value.trim();
         renderOverview(
-          sorted.filter(r => r.supplier.includes(q))
+          overviewData.filter(r=> r.supplier.includes(q))
         );
       });
   </script>
