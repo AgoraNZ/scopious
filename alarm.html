@@ -6,48 +6,49 @@
   <title>Farm Alarms Detail</title>
   <style>
     :root {
-      --bg: #1e1e1e;
-      --header-bg: #2c2c2c;
-      --row-hover: #333;
-      --text: #f5f5f5;
-      --ok: #2ecc71; --warning: #f39c12;
-      --note: #3498db; --critical: #e74c3c;
+      --bg:#1e1e1e; --header-bg:#2c2c2c;
+      --row-hover:#333; --text:#f5f5f5;
+      --ok:#2ecc71; --warning:#f39c12;
+      --note:#3498db; --critical:#e74c3c;
     }
-    * { box-sizing:border-box; }
-    body {
-      margin:0; font-family:sans-serif;
-      background:var(--bg); color:var(--text);
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:sans-serif;
+      background:var(--bg);color:var(--text);}
+    .container{max-width:900px;
+      margin:20px auto;padding:0 16px;}
+    button{
+      background:#2c2c2c;border:none;
+      color:var(--text);padding:8px 12px;
+      border-radius:4px;cursor:pointer;
+      margin-bottom:12px;
     }
-    .container { max-width:900px; margin:20px auto; padding:0 16px; }
-    button {
-      background:#2c2c2c; border:none;
-      color:var(--text); padding:8px 12px;
-      border-radius:4px; cursor:pointer;
+    h1{margin:12px 0;}
+    .filters{display:flex;gap:12px;margin-bottom:12px;}
+    .filters select,
+    .filters input[type=date]{
+      padding:6px 8px;border:none;
+      border-radius:4px;
+      background:#2c2c2c;color:var(--text);
     }
-    h1 { margin:12px 0; }
-    .filters { display:flex; gap:12px; margin-bottom:12px; }
-    .filters select, .filters input[type="date"] {
-      padding:6px 8px; border:none; border-radius:4px;
-      background:#2c2c2c; color:var(--text);
+    table{width:100%;border-collapse:collapse;}
+    thead{background:var(--header-bg);}
+    th,td{
+      padding:10px;text-align:left;
+      font-size:0.95rem;color:var(--text);
     }
-    table { width:100%; border-collapse:collapse; }
-    thead { background:var(--header-bg); }
-    th, td {
-      padding:10px; font-size:0.95rem;
-      text-align:left; color:var(--text);
+    tbody tr{border-top:1px solid #444;}
+    tbody tr:hover{background:var(--row-hover);}
+    .dot{display:inline-block;
+      width:10px;height:10px;
+      border-radius:50%;margin-right:6px;
+      vertical-align:middle;
     }
-    tbody tr { border-top:1px solid #444; }
-    tbody tr:hover { background:var(--row-hover); }
-    .dot {
-      display:inline-block; width:10px; height:10px;
-      border-radius:50%; margin-right:6px; vertical-align:middle;
-    }
-    .status-ok       .dot { background:var(--ok); }
-    .status-warning  .dot { background:var(--warning); }
-    .status-note     .dot { background:var(--note); }
-    .status-critical .dot { background:var(--critical); }
-    td.comment { cursor:text; }
-    td.comment[contenteditable]:focus {
+    .status-ok       .dot{background:var(--ok);}
+    .status-warning  .dot{background:var(--warning);}
+    .status-note     .dot{background:var(--note);}
+    .status-critical .dot{background:var(--critical);}
+    td.comment{cursor:text;}
+    td.comment[contenteditable]:focus{
       outline:2px dashed var(--note);
     }
   </style>
@@ -77,74 +78,90 @@
   </div>
 
   <script>
+    // 1) get supplier#
     const params = new URLSearchParams(location.search);
     const farm = params.get('supplier') || 'Unknown';
-    document.getElementById('farm-title').textContent = `Farm ${farm} Alarms`;
+    document.getElementById('farm-title').textContent =
+      `Farm ${farm} Alarms`;
 
-    const detailData = [
-      // sample for farm 12345
-      { supplier:'12345', status:'Ok',       alarmName:'Milk Collection',   time:'2025-05-08 09:11', comment:'Done' },
-      { supplier:'12345', status:'Warning',  alarmName:'Agitator Fault',    time:'2025-05-06 18:30', comment:'Monitoring' },
-      { supplier:'12345', status:'Critical', alarmName:'Vat Wash Failure',   time:'2025-05-05 05:39', comment:'Operator alerted' },
-      { supplier:'12345', status:'Note',     alarmName:'Battery Low Alarm', time:'2025-05-04 10:30', comment:'' },
-      { supplier:'12345', status:'Ok',       alarmName:'Plate Cooler Fault',time:'2025-05-03 14:15', comment:'' },
-      // ...you can add more for this farm or others
+    // 2) a palette of example alarms
+    const examples = [
+      { status:'Critical', alarmName:'Vat Wash Failure',   comment:'Operator alerted' },
+      { status:'Warning',  alarmName:'Agitator Fault',      comment:'Under investigation' },
+      { status:'Note',     alarmName:'Battery Low Alarm',   comment:'Recharged soon' },
+      { status:'Ok',       alarmName:'Milk Collection',     comment:'Completed' },
+      { status:'Ok',       alarmName:'Plate Cooler Fault',  comment:'Checked' },
+      { status:'Warning',  alarmName:'Chiller Condition',   comment:'Monitoring' },
+      { status:'Note',     alarmName:'Network Heartbeat',   comment:'All good' },
+      { status:'Ok',       alarmName:'Vat Hot Wash',        comment:'Done' },
+      { status:'Warning',  alarmName:'Low Vacuum Level',    comment:'Adjusting' },
+      { status:'Ok',       alarmName:'Routine Check',       comment:'OK' }
     ];
 
-    let rows = detailData.filter(r=> r.supplier === farm);
+    // 3) build 10+ entries for *this* farm
+    const rows = [];
+    for (let i = 0; i < 12; i++) {
+      const ex = examples[i % examples.length];
+      // timestamp staggered backwards by i days
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const ts = d.toISOString().replace('T',' ').slice(0,16);
+      rows.push({
+        supplier: farm,
+        status: ex.status,
+        alarmName: ex.alarmName,
+        time: ts,
+        comment: ex.comment
+      });
+    }
 
-    // populate type dropdown
+    // 4) populate type-filter
     const typeSel = document.getElementById('typeFilter');
     new Set(rows.map(r=>r.alarmName))
-      .forEach(n=>{
+      .forEach(name=>{
         const o = document.createElement('option');
-        o.value=n; o.textContent=n;
+        o.value = name; o.textContent = name;
         typeSel.appendChild(o);
       });
 
+    // 5) render function
     function renderDetails(data) {
       const tbody = document.getElementById('detail-body');
       tbody.innerHTML = '';
       data.forEach(r=>{
         const tr = document.createElement('tr');
-        // status
-        const st = document.createElement('td');
-        st.classList.add('status-'+r.status.toLowerCase());
-        st.innerHTML = `<span class="dot"></span>${r.status}`;
-        tr.appendChild(st);
-        // name
-        const nm = document.createElement('td');
-        nm.textContent = r.alarmName;
-        tr.appendChild(nm);
-        // time
-        const tm = document.createElement('td');
-        tm.textContent = r.time;
-        tr.appendChild(tm);
-        // comment
-        const cm = document.createElement('td');
-        cm.classList.add('comment');
-        cm.contentEditable = true;
-        cm.textContent = r.comment;
-        tr.appendChild(cm);
-
+        tr.innerHTML = `
+          <td class="status-${r.status.toLowerCase()}">
+            <span class="dot"></span>${r.status}
+          </td>
+          <td>${r.alarmName}</td>
+          <td>${r.time}</td>
+          <td class="comment" contenteditable>${r.comment}</td>
+        `;
         tbody.appendChild(tr);
       });
     }
 
+    // 6) initial render
     renderDetails(rows);
-    function applyFilters(){
+
+    // 7) filtering logic
+    function applyFilters() {
+      let out = rows;
       const t = typeSel.value;
       const f = document.getElementById('fromDate').value;
-      const t2= document.getElementById('toDate').value;
-      let out = rows;
-      if(t)  out = out.filter(r=>r.alarmName===t);
-      if(f)  out = out.filter(r=>r.time>=f);
-      if(t2) out = out.filter(r=>r.time<=t2+' 23:59');
+      const to = document.getElementById('toDate').value;
+      if (t)   out = out.filter(r=> r.alarmName === t);
+      if (f)   out = out.filter(r=> r.time >= f);
+      if (to)  out = out.filter(r=> r.time <= to + ' 23:59');
       renderDetails(out);
     }
-    typeSel.addEventListener('change',applyFilters);
-    document.getElementById('fromDate').addEventListener('change',applyFilters);
-    document.getElementById('toDate').addEventListener('change',applyFilters);
+
+    typeSel.addEventListener('change', applyFilters);
+    document.getElementById('fromDate')
+      .addEventListener('change', applyFilters);
+    document.getElementById('toDate')
+      .addEventListener('change', applyFilters);
   </script>
 </body>
 </html>
