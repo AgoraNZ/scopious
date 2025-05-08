@@ -8,166 +8,159 @@
     :root {
       --bg: #1e1e1e;
       --header-bg: #2c2c2c;
-      --row-hover: #333;
       --text: #f5f5f5;
+      --border: #444;
       --ok: #2ecc71;
       --warning: #f39c12;
       --info: #3498db;
       --critical: #e74c3c;
+      --card-bg: #222;
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0;
-      font-family: sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      margin:0;
+      font-family:sans-serif;
+      background:var(--bg);
+      color:var(--text);
     }
     .container {
-      max-width: 960px;
-      margin: 20px auto;
-      padding: 0 16px;
+      max-width:960px;
+      margin:20px auto;
+      padding:0 16px;
     }
-    h1 { margin-bottom: 12px; }
+    h1 { margin-bottom:12px; }
 
-    /* Summary table */
+    /* Summary */
     .summary table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
+      width:100%;
+      border-collapse:collapse;
+      margin-bottom:20px;
     }
-    .summary thead {
-      background: var(--header-bg);
-    }
+    .summary thead { background:var(--header-bg); }
     .summary th, .summary td {
-      padding: 8px;
-      font-size: 0.9rem;
-      text-align: left;
-      color: var(--text);
-      border-bottom: 1px solid #444;
+      padding:8px;
+      font-size:0.9rem;
+      color:var(--text);
+      border-bottom:1px solid var(--border);
+      text-align:left;
     }
 
     /* Add Farm */
-    .add-farm-btn { margin-bottom: 12px; }
+    .add-farm-btn { margin-bottom:12px; }
     .add-farm-btn button {
-      padding: 8px 12px;
-      background: #3498db;
-      border: none;
-      color: #fff;
-      border-radius: 4px;
-      cursor: pointer;
+      padding:8px 12px; background:#3498db; border:none;
+      color:#fff; border-radius:4px; cursor:pointer;
     }
     #addFarmForm {
-      display: none;
-      background: #222;
-      border: 1px solid #444;
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 16px;
+      display:none;
+      background:var(--card-bg);
+      border:1px solid var(--border);
+      padding:12px; border-radius:6px;
+      margin-bottom:16px;
     }
     #addFarmForm label {
-      display: block;
-      color: var(--text);
-      margin-bottom: 6px;
+      display:block; margin-bottom:6px; color:var(--text);
     }
     #addFarmForm input[type="text"] {
-      width: 100%;
-      padding: 6px;
-      border: 1px solid #555;
-      background: #333;
-      color: var(--text);
-      border-radius: 4px;
-      margin-bottom: 12px;
+      width:100%; padding:6px; margin-bottom:12px;
+      border:1px solid #555; border-radius:4px;
+      background:#333; color:var(--text);
     }
     .alarms-list {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px;
-      margin-bottom: 12px;
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:4px; margin-bottom:12px;
     }
     .alarms-list label {
-      display: flex;
-      align-items: center;
-      font-size: 0.9rem;
+      display:flex; align-items:center;
+      font-size:0.9rem;
     }
-    .alarms-list input { margin-right: 6px; }
+    .alarms-list input { margin-right:6px; }
     #addFarmForm .buttons {
-      text-align: right;
+      text-align:right;
     }
     #addFarmForm .buttons button {
-      padding: 6px 10px;
-      margin-left: 8px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+      padding:6px 10px; margin-left:8px;
+      border:none; border-radius:4px; cursor:pointer;
     }
 
-    /* Search & Overview */
-    .search { margin-bottom: 12px; }
+    /* Search */
+    .search { margin-bottom:12px; }
     .search input {
-      width: 100%;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 4px;
-      background: #2c2c2c;
-      color: var(--text);
+      width:100%; padding:8px 12px;
+      border:none; border-radius:4px;
+      background:#2c2c2c; color:var(--text);
     }
-    table.overview {
-      width: 100%;
-      border-collapse: collapse;
+
+    /* Grid of cards */
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+      gap:16px;
     }
-    thead.overview {
-      background: var(--header-bg);
+    .card {
+      background:var(--card-bg);
+      border:1px solid var(--border);
+      border-radius:6px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
     }
-    th.overview, td.overview {
-      padding: 10px;
-      text-align: left;
-      font-size: 0.95rem;
-      color: var(--text);
-      border-bottom: 1px solid #444;
+    .card--ok       { border-left:4px solid var(--ok); }
+    .card--warning  { border-left:4px solid var(--warning); }
+    .card--info     { border-left:4px solid var(--info); }
+    .card--critical { border-left:4px solid var(--critical); }
+    .card .supplier {
+      font-weight:bold;
+      margin-bottom:8px;
     }
-    tbody.overview tr:hover { background: var(--row-hover); }
-    .dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 6px;
-      vertical-align: middle;
+    .card .supplier a {
+      color:var(--text); text-decoration:none;
     }
-    .status-ok       .dot { background: var(--ok); }
-    .status-warning  .dot { background: var(--warning); }
-    .status-info     .dot { background: var(--info); }
-    .status-critical .dot { background: var(--critical); }
-    table.overview a {
-      color: var(--text) !important;
-      text-decoration: none;
-      display: block;
-      width: 100%;
-      height: 100%;
+    .card .status {
+      margin-bottom:8px;
     }
-    td.comment { min-width: 120px; }
-    td.actions button {
-      padding: 4px 8px;
-      background: #3498db;
-      border: none;
-      color: #fff;
-      border-radius: 4px;
-      cursor: pointer;
+    .badge {
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:12px;
+      font-size:0.85rem;
+      color:#fff;
+    }
+    .badge-ok       { background:var(--ok); }
+    .badge-warning  { background:var(--warning); }
+    .badge-info     { background:var(--info); }
+    .badge-critical { background:var(--critical); }
+    .card .alarm-name,
+    .card .time {
+      margin-bottom:6px;
+      font-size:0.9rem;
+    }
+    .card .alarm-name a,
+    .card .time a {
+      color:var(--text); text-decoration:none;
+    }
+    .card .comment {
+      font-size:0.85rem;
+      color:var(--text);
+      min-height:1.2em;
+    }
+    .card .comment[contenteditable] {
+      background:rgba(255,255,255,0.05);
+      padding:4px; border-radius:4px;
+      outline:none;
+      cursor:text;
     }
 
     /* Footer */
     .footer-btn {
-      text-align: center;
-      margin-top: 20px;
+      text-align:center; margin-top:20px;
     }
     .footer-btn button {
-      padding: 10px 20px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 4px;
-      background: #3498db;
-      color: #fff;
-      cursor: pointer;
+      padding:10px 20px; font-size:1rem;
+      border:none; border-radius:4px;
+      background:#3498db; color:#fff;
+      cursor:pointer;
     }
   </style>
 </head>
@@ -175,7 +168,7 @@
   <div class="container">
     <h1>Dairy Farm Alerts Overview</h1>
 
-    <!-- Summary Table -->
+    <!-- Summary -->
     <div class="summary">
       <table>
         <thead>
@@ -188,18 +181,14 @@
             <th>Inactive Devices</th>
           </tr>
         </thead>
-        <tbody id="summary-body">
-          <!-- filled by JS -->
-        </tbody>
+        <tbody id="summary-body"></tbody>
       </table>
     </div>
 
-    <!-- Add Farm Button -->
+    <!-- Add Farm -->
     <div class="add-farm-btn">
       <button id="showAddForm">Add Farm</button>
     </div>
-
-    <!-- Add Farm Form -->
     <div id="addFarmForm">
       <label>Supplier Number:
         <input type="text" id="newSupplier" placeholder="e.g. 12345"/>
@@ -222,30 +211,16 @@
       <input id="search" placeholder="🔍 Filter by supplier number…"/>
     </div>
 
-    <!-- Overview Table -->
-    <table class="overview">
-      <thead class="overview">
-        <tr>
-          <th class="overview">Supplier #</th>
-          <th class="overview">Farm Name</th>
-          <th class="overview">Status</th>
-          <th class="overview">Alarm Name</th>
-          <th class="overview">Time Triggered</th>
-          <th class="overview">Comments</th>
-          <th class="overview">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="overview-body"></tbody>
-    </table>
+    <!-- Grid of Farms -->
+    <div class="grid" id="overview-grid"></div>
 
-    <!-- Create Rule Button -->
+    <!-- Footer -->
     <div class="footer-btn">
       <button onclick="location.href='rules.html'">Create Alarm / Rule</button>
     </div>
   </div>
 
   <script>
-    // Alarm types
     const ALARMS = [
       'Milk Collection',
       'Plate Cooler Fault',
@@ -256,8 +231,6 @@
       'Chiller Condition',
       'temperature fault'
     ];
-
-    // Pre-configured event history
     const historyCfg = {
       '12345': {criticalOn:null, warningOn:null},
       '52440': {criticalOn:null, warningOn:null},
@@ -270,137 +243,117 @@
       '99887': {criticalOn:'2025-04-30 12:50', warningOn:null},
       '55678': {criticalOn:null, warningOn:null}
     };
-
-    // LocalStorage key
-    const LS_FARMS = 'farms';
-
+    const LS = 'farms';
     function loadFarms(){
-      let f = JSON.parse(localStorage.getItem(LS_FARMS)||'null');
+      let f = JSON.parse(localStorage.getItem(LS)||'null');
       if(!f){
         f = Object.keys(historyCfg).map(s=>({
-          supplier:s,
-          name:'',
-          activeAlarms:[...ALARMS]
+          supplier:s, name:'', activeAlarms:[...ALARMS]
         }));
-        localStorage.setItem(LS_FARMS, JSON.stringify(f));
+        localStorage.setItem(LS,JSON.stringify(f));
       }
       return f;
     }
-    function saveFarms(f){
-      localStorage.setItem(LS_FARMS, JSON.stringify(f));
-    }
+    function saveFarms(f){ localStorage.setItem(LS,JSON.stringify(f)); }
+    let farms = loadFarms();
 
-    let farmsList = loadFarms();
-
-    // Render Summary
+    // Summary
     function renderSummary(){
       const sb = document.getElementById('summary-body');
-      const totalGateways  = farmsList.length;
-      const sensorsPerFarm = 4;
-      const totalDevices   = farmsList.length * sensorsPerFarm;
-      const activeDevices  = totalDevices; // assume all active
-      const inactiveDevices= 0;
-      sb.innerHTML = `
-        <tr>
-          <td>All Farms</td>
-          <td>Active</td>
-          <td>${totalGateways}</td>
-          <td>${totalDevices}</td>
-          <td>${activeDevices}</td>
-          <td>${inactiveDevices}</td>
-        </tr>
-      `;
+      const gw = farms.length;
+      const devPer = 4;
+      const totDev = gw*devPer;
+      sb.innerHTML = `<tr>
+        <td>All Farms</td>
+        <td>Active</td>
+        <td>${gw}</td>
+        <td>${totDev}</td>
+        <td>${totDev}</td>
+        <td>0</td>
+      </tr>`;
     }
     renderSummary();
 
-    // Build overview data
-    function makeOverview(f){
+    // Build grid data
+    function makeCardData(f){
       const cfg = historyCfg[f.supplier]||{};
-      let status='Ok', alarmName='', time='', comment='';
+      let status='Ok', alarm='', time='', comment='';
       if(cfg.criticalOn){
-        status='Critical'; alarmName='temperature fault';
+        status='Critical'; alarm='temperature fault';
         time=cfg.criticalOn; comment='Immediate attention required';
-      } else if(cfg.warningOn){
-        status='Warning'; alarmName='Battery Low Alarm';
+      }
+      else if(cfg.warningOn){
+        status='Warning'; alarm='Battery Low Alarm';
         time=cfg.warningOn;
       }
-      return {...f, status, alarmName, time, comment};
+      return {...f, status, alarm, time, comment};
     }
-    let overviewData = farmsList
-      .map(makeOverview)
-      .sort((a,b)=>{
-        const sev={Critical:3,Warning:2,Info:1,Ok:0};
-        return sev[b.status]-sev[a.status];
-      });
+    let cards = farms.map(makeCardData);
 
-    // Render Overview
-    function renderOverview(rows){
-      const tb = document.getElementById('overview-body');
-      tb.innerHTML = '';
-      rows.forEach(r=>{
+    // Render grid
+    function renderGrid(items){
+      const grid = document.getElementById('overview-grid');
+      grid.innerHTML = '';
+      items.forEach(r=>{
+        const card = document.createElement('div');
+        card.className = `card card--${r.status.toLowerCase()}`;
         const editable = r.status==='Critical'?'contenteditable':'';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
+        card.innerHTML = `
+          <div class="supplier">
             <a href="dashboard.html?supplier=${r.supplier}">
               ${r.supplier}
             </a>
-          </td>
-          <td>${r.name}</td>
-          <td class="status-${r.status.toLowerCase()}">
+          </div>
+          <div class="status">
+            <span class="badge badge-${r.status.toLowerCase()}">
+              ${r.status}
+            </span>
+          </div>
+          <div class="alarm-name">
             <a href="alarm.html?supplier=${r.supplier}">
-              <span class="dot"></span>${r.status}
+              ${r.alarm}
             </a>
-          </td>
-          <td>
-            <a href="alarm.html?supplier=${r.supplier}">
-              ${r.alarmName}
-            </a>
-          </td>
-          <td>
+          </div>
+          <div class="time">
             <a href="alarm.html?supplier=${r.supplier}">
               ${r.time}
             </a>
-          </td>
-          <td class="comment" ${editable}>${r.comment}</td>
-          <td class="actions">
-            <button onclick="location.href='setup.html?supplier=${r.supplier}'">
-              Edit
-            </button>
-          </td>
+          </div>
+          <div class="comment" ${editable}>
+            ${r.comment}
+          </div>
         `;
-        tb.appendChild(tr);
+        grid.appendChild(card);
       });
     }
-    renderOverview(overviewData);
+    renderGrid(cards);
 
-    // Live search
+    // Search
     document.getElementById('search')
-      .addEventListener('input', e=>{
+      .addEventListener('input',e=>{
         const q=e.target.value.trim();
-        renderOverview(
-          overviewData.filter(r=>r.supplier.includes(q))
+        renderGrid(
+          cards.filter(c=>c.supplier.includes(q))
         );
       });
 
-    // Add Farm form logic
-    const showBtn     = document.getElementById('showAddForm');
-    const formDiv     = document.getElementById('addFarmForm');
-    const cancelBtn   = document.getElementById('cancelAdd');
-    const saveBtn     = document.getElementById('saveAdd');
-    const alarmChkDiv = document.getElementById('alarmsCheckboxes');
+    // Add Farm form:
+    const showBtn = document.getElementById('showAddForm');
+    const formDiv = document.getElementById('addFarmForm');
+    const cancelBtn = document.getElementById('cancelAdd');
+    const saveBtn = document.getElementById('saveAdd');
+    const chkDiv   = document.getElementById('alarmsCheckboxes');
 
     showBtn.onclick = ()=>{
       formDiv.style.display='block';
-      alarmChkDiv.innerHTML = '';
-      ALARMS.forEach(name=>{
-        const id = `chk_${name.replace(/\s+/g,'')}`;
-        alarmChkDiv.innerHTML += `
+      chkDiv.innerHTML='';
+      ALARMS.forEach(n=>{
+        const id = 'chk_'+n.replace(/\s+/g,'');
+        chkDiv.innerHTML += `
           <label>
-            <input type="checkbox" id="${id}" value="${name}" checked/>
-            ${name}
-          </label>
-        `;
+            <input type="checkbox" id="${id}" value="${n}" checked/>
+            ${n}
+          </label>`;
       });
     };
     cancelBtn.onclick = ()=> formDiv.style.display='none';
@@ -408,22 +361,16 @@
     saveBtn.onclick = ()=>{
       const sup = document.getElementById('newSupplier').value.trim();
       const nm  = document.getElementById('newFarmName').value.trim();
-      if(!sup){ alert('Supplier # required'); return; }
-      if(farmsList.some(f=>f.supplier===sup)){
-        alert('This supplier already exists'); return;
-      }
-      const selected=[]
-      alarmChkDiv.querySelectorAll('input:checked')
-        .forEach(cb=>selected.push(cb.value));
-      const newFarm={ supplier:sup, name:nm, activeAlarms:selected };
-      farmsList.push(newFarm);
-      saveFarms(farmsList);
+      if(!sup){ alert('Supplier# required'); return; }
+      if(farms.some(f=>f.supplier===sup)){ alert('Exists');return; }
+      const act = [];
+      chkDiv.querySelectorAll('input:checked')
+        .forEach(cb=>act.push(cb.value));
+      const nf={supplier:sup,name:nm,activeAlarms:act};
+      farms.push(nf); saveFarms(farms);
       renderSummary();
-      overviewData=farmsList
-        .map(makeOverview)
-        .sort((a,b)=>({Critical:3,Warning:2,Info:1,Ok:0}[b.status]
-                     -({Critical:3,Warning:2,Info:1,Ok:0}[a.status])));
-      renderOverview(overviewData);
+      cards = farms.map(makeCardData);
+      renderGrid(cards);
       formDiv.style.display='none';
       document.getElementById('newSupplier').value='';
       document.getElementById('newFarmName').value='';
