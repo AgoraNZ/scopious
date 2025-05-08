@@ -13,78 +13,80 @@
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0;
-      font-family: sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      margin:0; font-family:sans-serif;
+      background:var(--bg); color:var(--text);
     }
     .container {
-      max-width: 1000px;
-      margin: 20px auto;
-      padding: 0 16px;
+      max-width:1000px; margin:20px auto; padding:0 16px;
     }
     button {
-      background: #2c2c2c;
-      border: none;
-      color: var(--text);
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-bottom: 12px;
+      background:#2c2c2c; border:none;
+      color:var(--text); padding:8px 12px;
+      border-radius:4px; cursor:pointer;
+      margin-bottom:12px;
     }
-    h1 { margin: 12px 0; }
+    h1 { margin:12px 0; }
     .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-auto-rows: 180px;
-      gap: 12px;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      grid-auto-rows:180px;
+      gap:12px;
     }
     .panel {
-      background: var(--panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px;
-      position: relative;
-      overflow: hidden;
+      background:var(--panel-bg);
+      border:1px solid var(--border);
+      border-radius:6px; padding:10px;
+      position:relative; overflow:hidden;
     }
     .panel .title {
-      font-size: 0.9rem;
-      color: #ccc;
-      margin-bottom: 4px;
+      font-size:0.9rem; color:#ccc;
+      margin-bottom:4px;
     }
     .panel .value {
-      position: absolute;
-      top: 40%;
-      left: 50%;
-      transform: translate(-50%, -40%);
-      font-size: 2.5rem;
-      font-weight: 300;
-      pointer-events: none;
+      position:absolute; top:40%; left:50%;
+      transform:translate(-50%,-40%);
+      font-size:2.5rem; font-weight:300;
+      pointer-events:none;
     }
     .panel canvas {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 50%;
-      opacity: 0.5;
+      position:absolute; bottom:0; left:0;
+      width:100%; height:50%; opacity:0.5;
     }
+
     /* historical section */
     .historical-section {
-      margin-top: 30px;
+      margin-top:30px;
       background: var(--panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 16px;
+      border:1px solid var(--border);
+      border-radius:6px;
+      padding:16px;
     }
     .historical-section h2 {
-      margin: 0 0 12px;
-      font-size: 1.1rem;
-      color: #ccc;
+      margin:0 0 12px;
+      font-size:1.1rem;
+      color:#ccc;
     }
     .historical-section canvas {
-      width: 100% !important;
-      height: 300px !important;
+      width:100% !important;
+      height:300px !important;
+    }
+
+    /* battery section */
+    .battery-section {
+      margin-top:30px;
+      background: var(--panel-bg);
+      border:1px solid var(--border);
+      border-radius:6px;
+      padding:16px;
+    }
+    .battery-section h2 {
+      margin:0 0 12px;
+      font-size:1.1rem;
+      color:#ccc;
+    }
+    .battery-section canvas {
+      width:100% !important;
+      height:200px !important;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -137,6 +139,12 @@
       <h2>Historical Data</h2>
       <canvas id="historical-chart"></canvas>
     </div>
+
+    <!-- Battery Levels Chart -->
+    <div class="battery-section">
+      <h2>Battery Levels</h2>
+      <canvas id="battery-chart"></canvas>
+    </div>
   </div>
 
   <script>
@@ -146,113 +154,87 @@
     document.getElementById('dash-title')
       .textContent = `Dashboard – Farm ${farm}`;
 
-    // helper for mini‐charts
+    // mini‐charts helper
     function makeChart(id, pts) {
       new Chart(document.getElementById(id), {
         type: 'line',
-        data: {
-          datasets: [{
-            data: pts,
-            fill: false,
-            borderColor: '#2ecc71',
-            borderWidth: 1.5,
-            pointRadius: 0
-          }]
-        },
-        options: {
-          animation: false,
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { display: false },
-            y: { display: false }
-          },
-          plugins: { legend: false, tooltip: false }
+        data: { datasets:[{ data:pts, fill:false, borderColor:'#2ecc71', borderWidth:1.5, pointRadius:0 }]},
+        options:{
+          animation:false, responsive:true, maintainAspectRatio:false,
+          scales:{ x:{display:false}, y:{display:false} },
+          plugins:{ legend:false, tooltip:false }
         }
       });
     }
 
-    const now = Date.now(), past = now - 6 * 3600 * 1000;
-    makeChart('c1', [{x: past, y: 2.5}, {x: now, y: 0.4}]);
-    makeChart('c2', [{x: past, y: 15},  {x: now, y: 13.5}]);
-    makeChart('c3', [{x: past, y: 20.5},{x: now, y: 18}]);
-    makeChart('c4', [{x: past, y: 21.2},{x: now, y: 21.3}]);
-    makeChart('c5', [{x: past, y: 2225},{x: now, y: 2224.93}]);
-    makeChart('c6', [{x: past, y: 3340},{x: now, y: 3343.03}]);
-    makeChart('c7', [{x: past, y: 3720},{x: now, y: 3722.98}]);
+    const now = Date.now(), past = now - 6*3600*1000;
+    makeChart('c1', [{x:past,y:2.5},{x:now,y:0.4}]);
+    makeChart('c2', [{x:past,y:15},{x:now,y:13.5}]);
+    makeChart('c3', [{x:past,y:20.5},{x:now,y:18}]);
+    makeChart('c4', [{x:past,y:21.2},{x:now,y:21.3}]);
+    makeChart('c5', [{x:past,y:2225},{x:now,y:2224.93}]);
+    makeChart('c6', [{x:past,y:3340},{x:now,y:3343.03}]);
+    makeChart('c7', [{x:past,y:3720},{x:now,y:3722.98}]);
 
-    // ----- Historical Chart using category axis -----
+    // Historical chart (category axis)
     const labels = [
-      '2025-05-02 12:00',
-      '2025-05-03 12:00',
-      '2025-05-04 12:00',
-      '2025-05-05 12:00',
-      '2025-05-06 12:00',
-      '2025-05-07 12:00',
-      '2025-05-08 12:00'
+      '2025-05-02','2025-05-03','2025-05-04',
+      '2025-05-05','2025-05-06','2025-05-07','2025-05-08'
     ];
-    const ch1 =         [0.5, 1.0, 0.8, 1.2, 0.9, 1.5, 0.4];
-    const ch2 =         [14, 14.5, 14, 15, 13.8, 14.2, 13.5];
-    const temperature = [21.2, 21.25, 21.3, 21.28, 21.31, 21.29, 21.3];
+    const ch1 = [0.5,1.0,0.8,1.2,0.9,1.5,0.4];
+    const ch2 = [14,14.5,14,15,13.8,14.2,13.5];
+    const temp= [21.2,21.25,21.3,21.28,21.31,21.29,21.3];
 
-    const histCtx = document.getElementById('historical-chart');
-    new Chart(histCtx, {
-      type: 'line',
+    new Chart(document.getElementById('historical-chart'), {
+      type:'line',
+      data:{ labels, datasets:[
+        { label:'Ch1 Current',   data:ch1,  borderColor:'#1abc9c', fill:false, tension:0.3 },
+        { label:'Ch2 Current',   data:ch2,  borderColor:'#9b59b6', fill:false, tension:0.3 },
+        { label:'Temperature',   data:temp, borderColor:'#e74c3c', fill:false, tension:0.3 }
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        scales:{
+          x:{ ticks:{color:'#bbb'}, grid:{color:'#333'} },
+          y:{ ticks:{color:'#bbb'}, grid:{color:'#333'} }
+        },
+        plugins:{
+          legend:{ labels:{color:'#f5f5f5'} },
+          tooltip:{mode:'index',intersect:false}
+        },
+        interaction:{mode:'nearest',axis:'x',intersect:false}
+      }
+    });
+
+    // Battery bar chart
+    const sensors = ['Sensor A','Sensor B','Sensor C','Sensor D','Sensor E'];
+    const batteryLevels = [85, 60, 45, 95, 72];  // example %
+
+    new Chart(document.getElementById('battery-chart'), {
+      type: 'bar',
       data: {
-        labels,
-        datasets: [
-          {
-            label: 'Ch1 Current',
-            data: ch1,
-            borderColor: '#1abc9c',
-            fill: false,
-            tension: 0.3
-          },
-          {
-            label: 'Ch2 Current',
-            data: ch2,
-            borderColor: '#9b59b6',
-            fill: false,
-            tension: 0.3
-          },
-          {
-            label: 'Temperature',
-            data: temperature,
-            borderColor: '#e74c3c',
-            fill: false,
-            tension: 0.3
-          }
-        ]
+        labels: sensors,
+        datasets: [{
+          label: 'Battery Level (%)',
+          data: batteryLevels,
+          backgroundColor: sensors.map(_=>'#3498db')
+        }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         scales: {
           x: {
-            display: true,
             ticks: { color: '#bbb' },
-            grid: { color: '#333' }
+            grid: { display: false }
           },
           y: {
-            display: true,
+            beginAtZero: true,
+            max: 100,
             ticks: { color: '#bbb' },
             grid: { color: '#333' }
           }
         },
-        plugins: {
-          legend: {
-            labels: { color: '#f5f5f5' }
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false
-          }
-        },
-        interaction: {
-          mode: 'nearest',
-          axis: 'x',
-          intersect: false
-        }
+        plugins: { legend: { display: false } }
       }
     });
   </script>
