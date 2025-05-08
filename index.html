@@ -200,6 +200,15 @@
       border-radius: 4px;
       cursor: text;
     }
+    .card .view-alerts {
+      margin-top: 12px;
+      text-align: right;
+    }
+    .card .view-alerts a {
+      color: #3498db;
+      text-decoration: underline;
+      font-size: 0.9rem;
+    }
 
     /* Footer */
     .footer-btn {
@@ -332,7 +341,7 @@
     }
     renderSummary();
 
-    // Severity order
+    // Severity
     const severity = { Critical:3, Warning:2, Info:1, Ok:0 };
 
     // Build card data
@@ -344,8 +353,7 @@
         alarm='temperature fault';
         time=cfg.criticalOn;
         comment='Immediate attention required';
-      }
-      else if(cfg.warningOn){
+      } else if(cfg.warningOn){
         status='Warning';
         alarm='Battery Low Alarm';
         time=cfg.warningOn;
@@ -390,13 +398,16 @@
             </a>
           </div>
           <div class="comment" ${editable}>${r.comment}</div>
+          <div class="view-alerts">
+            <a href="alarm.html?supplier=${r.supplier}">View Alerts →</a>
+          </div>
         `;
         grid.appendChild(card);
       });
     }
     renderGrid(sortedCards());
 
-    // Search filters, preserving sort
+    // Search
     document.getElementById('search')
       .addEventListener('input', e=>{
         const q = e.target.value.trim();
@@ -405,12 +416,12 @@
         );
       });
 
-    // Add Farm form logic
+    // Add Farm form
     const showBtn = document.getElementById('showAddForm');
     const formDiv = document.getElementById('addFarmForm');
     const cancelBtn = document.getElementById('cancelAdd');
-    const saveBtn = document.getElementById('saveAdd');
-    const chkDiv = document.getElementById('alarmsCheckboxes');
+    const saveBtn   = document.getElementById('saveAdd');
+    const chkDiv    = document.getElementById('alarmsCheckboxes');
 
     showBtn.onclick = ()=>{
       formDiv.style.display = 'block';
@@ -431,9 +442,7 @@
       const sup = document.getElementById('newSupplier').value.trim();
       const nm  = document.getElementById('newFarmName').value.trim();
       if(!sup){ alert('Supplier# required'); return; }
-      if(farms.some(f=>f.supplier===sup)){
-        alert('Already exists'); return;
-      }
+      if(farms.some(f=>f.supplier===sup)){ alert('Already exists'); return; }
       const act = [];
       chkDiv.querySelectorAll('input:checked')
         .forEach(cb=>act.push(cb.value));
