@@ -6,88 +6,63 @@
   <title>Farm Alarms Detail</title>
   <style>
     :root {
-      --bg: #1e1e1e;
-      --header-bg: #2c2c2c;
-      --row-hover: #333;
-      --text: #f5f5f5;
-      --ok: #2ecc71;
-      --warning: #f39c12;
-      --info: #3498db;
-      --critical: #e74c3c;
+      --bg:#1e1e1e; --header-bg:#2c2c2c;
+      --row-hover:#333; --text:#f5f5f5;
+      --ok:#2ecc71; --warning:#f39c12;
+      --info:#3498db; --critical:#e74c3c;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: var(--bg);
-      color: var(--text);
+    *{box-sizing:border-box;}
+    body{
+      margin:0;font-family:sans-serif;
+      background:var(--bg);color:var(--text);
     }
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 0 16px;
+    .container{
+      max-width:900px;
+      margin:20px auto;
+      padding:0 16px;
     }
-    button {
-      background: #2c2c2c;
-      border: none;
-      color: var(--text);
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-bottom: 12px;
+    button{
+      background:#2c2c2c;border:none;
+      color:var(--text);padding:8px 12px;
+      border-radius:4px;cursor:pointer;
+      margin-bottom:12px;
     }
-    h1 { margin: 12px 0; }
-    .filters {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 12px;
+    h1{margin:12px 0;}
+    .filters{
+      display:flex;gap:12px;
+      margin-bottom:12px;
     }
     .filters select,
-    .filters input[type="date"] {
-      padding: 6px 8px;
-      border: none;
-      border-radius: 4px;
-      background: #2c2c2c;
-      color: var(--text);
+    .filters input[type=date]{
+      padding:6px 8px;border:none;
+      border-radius:4px;
+      background:#2c2c2c;color:var(--text);
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    table{width:100%;border-collapse:collapse;}
+    thead{background:var(--header-bg);}
+    th,td{
+      padding:10px;text-align:left;
+      font-size:0.95rem;color:var(--text);
     }
-    thead { background: var(--header-bg); }
-    th, td {
-      padding: 10px;
-      text-align: left;
-      font-size: 0.95rem;
-      color: var(--text);
+    tbody tr{border-top:1px solid #444;}
+    tbody tr:hover{background:var(--row-hover);}
+    .dot{
+      display:inline-block;width:10px;height:10px;
+      border-radius:50%;margin-right:6px;
+      vertical-align:middle;
     }
-    tbody tr {
-      border-top: 1px solid #444;
-    }
-    tbody tr:hover {
-      background: var(--row-hover);
-    }
-    .dot {
-      display: inline-block;
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-    .status-ok       .dot { background: var(--ok); }
-    .status-warning  .dot { background: var(--warning); }
-    .status-info     .dot { background: var(--info); }
-    .status-critical .dot { background: var(--critical); }
-    a { color: var(--text) !important; text-decoration: none; }
-    /* comments only on critical */
-    td.comment { min-width: 120px; }
+    .status-ok       .dot{background:var(--ok);}
+    .status-warning  .dot{background:var(--warning);}
+    .status-info     .dot{background:var(--info);}
+    .status-critical .dot{background:var(--critical);}
+    a{color:var(--text)!important;text-decoration:none;}
+    td.comment{min-width:120px;}
   </style>
 </head>
 <body>
   <div class="container">
-    <button onclick="history.back()">← Back</button>
+    <button onclick="window.location.href='index.html'">← Back</button>
     <h1 id="farm-title">Farm Alarms</h1>
-
     <div class="filters">
       <select id="typeFilter">
         <option value="">All Alarm Types</option>
@@ -95,7 +70,6 @@
       <input type="date" id="fromDate"/>
       <input type="date" id="toDate"/>
     </div>
-
     <table>
       <thead>
         <tr>
@@ -110,130 +84,106 @@
   </div>
 
   <script>
-    // 1) Read supplier#
-    const params = new URLSearchParams(location.search);
-    const farm = params.get('supplier') || 'Unknown';
-    document.getElementById('farm-title').textContent = `Farm ${farm} Alarms`;
-
-    // 2) The exact eight alarm names + realistic statuses
-    const ALARMS = [
-      'Milk Collection',
-      'Plate Cooler Fault',
-      'Vat Chiller Compressor Fault',
-      'Agitator Fault',
-      'Vat Hot Wash',
-      'Battery Low Alarm',
-      'Chiller Condition',
-      'temperature fault'
-    ];
-
-    // 3) A history map for every supplier in index.html
-    const history = {
-      '12345': { criticalAt: null, warningAt: null },
-      '52440': { criticalAt: null, warningAt: null },
-      '44074': { criticalAt: '2025-05-06 05:39', warningAt: null },
-      '35421': { criticalAt: null, warningAt: null },
-      '98765': { criticalAt: null, warningAt: '2025-05-04 10:30' },
-      '24680': { criticalAt: null, warningAt: null },
-      '13579': { criticalAt: null, warningAt: null },
-      '11223': { criticalAt: null, warningAt: null },
-      '99887': { criticalAt: '2025-04-30 12:50', warningAt: null },
-      '55678': { criticalAt: null, warningAt: null }
+    const ALARMS = {
+      info: ['Milk Collection','Vat Hot Wash'],
+      warning: ['Battery Low Alarm'],
+      critical: ['Plate Cooler Fault','Agitator Fault','Vat Chiller Compressor Fault']
+    };
+    const historyCfg = {
+      '12345': { criticalOn:null, warningOn:null },
+      '52440': { criticalOn:null, warningOn:null },
+      '44074': { criticalOn:'2025-05-06 05:39', warningOn:null },
+      '35421': { criticalOn:null, warningOn:null },
+      '98765': { criticalOn:null, warningOn:'2025-05-04 10:30' },
+      '24680': { criticalOn:null, warningOn:null },
+      '13579': { criticalOn:null, warningOn:null },
+      '11223': { criticalOn:null, warningOn:null },
+      '99887': { criticalOn:'2025-04-30 12:50', warningOn:null },
+      '55678': { criticalOn:null, warningOn:null }
     };
 
-    // 4) Build 10 days of entries per farm
+    // get farm
+    const params = new URLSearchParams(location.search);
+    const farm = params.get('supplier') || 'Unknown';
+    document.getElementById('farm-title')
+      .textContent = `Farm ${farm} Alarms`;
+
+    // build 10 days, then filter out Ok
     function buildRows(sup) {
-      const cfg = history[sup] || {};
-      const rows = [];
-      for (let i = 0; i < 10; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const ts = d.toISOString().replace('T',' ').slice(0,16);
-
-        let status, alarmName, comment = '';
-        if (cfg.criticalAt === ts) {
-          status = 'Critical';
-          alarmName = ALARMS[7]; // temperature fault
-          comment = 'Immediate attention required';
-        } else if (cfg.warningAt === ts) {
-          status = 'Warning';
-          alarmName = ALARMS[5]; // Battery Low Alarm
-        } else if (i % 3 === 0) {
-          status = 'Info';
-          alarmName = ALARMS[0]; // Milk Collection
-        } else {
-          status = 'Ok';
-          // cycle through the other six
-          alarmName = ALARMS[1 + (i % 6)];
+      const cfg = historyCfg[sup] || {};
+      const arr = [];
+      for (let i=0;i<10;i++){
+        const d=new Date();
+        d.setDate(d.getDate()-i);
+        const ts=d.toISOString().replace('T',' ').slice(0,16);
+        let status, alarmName, comment='';
+        if(cfg.criticalOn===ts){
+          status='Critical';
+          alarmName=ALARMS.critical[0];
+          comment='Immediate attention required';
         }
-
-        rows.push({ status, alarmName, time: ts, comment });
+        else if(cfg.warningOn===ts){
+          status='Warning';
+          alarmName=ALARMS.warning[0];
+        }
+        else if(i%3===0){
+          status='Info';
+          alarmName=ALARMS.info[i%2];
+        }
+        else{
+          status='Ok';
+          alarmName='';
+        }
+        arr.push({status,alarmName,time:ts,comment});
       }
-      return rows;
+      return arr.filter(r=>r.status!=='Ok');
     }
 
-    const rows = buildRows(farm);
+    const rows=buildRows(farm);
 
-    // 5) Populate the alarm-name filter
-    const typeSel = document.getElementById('typeFilter');
-    new Set(rows.map(r => r.alarmName))
-      .forEach(name => {
-        const o = document.createElement('option');
-        o.value = name;
-        o.textContent = name;
-        typeSel.appendChild(o);
-      });
+    // populate filter
+    const typeSel=document.getElementById('typeFilter');
+    new Set(rows.map(r=>r.alarmName)).forEach(n=>{
+      const o=document.createElement('option');
+      o.value=n;o.textContent=n;
+      typeSel.appendChild(o);
+    });
 
-    // 6) Render function
-    function renderDetails(data) {
-      const tbody = document.getElementById('detail-body');
-      tbody.innerHTML = '';
-      data.forEach(r => {
-        const tr = document.createElement('tr');
-        // status
-        const tdSt = document.createElement('td');
-        tdSt.classList.add('status-' + r.status.toLowerCase());
-        tdSt.innerHTML = `<span class="dot"></span>${r.status}`;
-        tr.appendChild(tdSt);
-        // name
-        const tdNm = document.createElement('td');
-        tdNm.textContent = r.alarmName;
-        tr.appendChild(tdNm);
-        // time
-        const tdTm = document.createElement('td');
-        tdTm.textContent = r.time;
-        tr.appendChild(tdTm);
-        // comment only if Critical
-        const tdCm = document.createElement('td');
-        tdCm.classList.add('comment');
-        if (r.status === 'Critical') {
-          tdCm.contentEditable = true;
-          tdCm.textContent = r.comment;
-        }
-        tr.appendChild(tdCm);
-
+    function renderDetails(data){
+      const tbody=document.getElementById('detail-body');
+      tbody.innerHTML='';
+      data.forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td class="status-${r.status.toLowerCase()}">
+            <span class="dot"></span>${r.status}
+          </td>
+          <td>${r.alarmName}</td>
+          <td>${r.time}</td>
+          <td class="comment">
+            ${r.status==='Critical'?r.comment:''}
+          </td>
+        `;
         tbody.appendChild(tr);
       });
     }
 
-    // initial render
     renderDetails(rows);
 
-    // 7) Filters
-    function applyFilters() {
-      let out = rows.slice();
-      const t = typeSel.value;
-      const f = document.getElementById('fromDate').value;
-      const to = document.getElementById('toDate').value;
-      if (t)    out = out.filter(r => r.alarmName === t);
-      if (f)    out = out.filter(r => r.time >= f);
-      if (to)   out = out.filter(r => r.time <= to + ' 23:59');
+    function applyFilters(){
+      let out=rows;
+      const t=typeSel.value;
+      const f=document.getElementById('fromDate').value;
+      const to=document.getElementById('toDate').value;
+      if(t)   out=out.filter(r=>r.alarmName===t);
+      if(f)   out=out.filter(r=>r.time>=f);
+      if(to)  out=out.filter(r=>r.time<=to+' 23:59');
       renderDetails(out);
     }
 
-    typeSel.addEventListener('change', applyFilters);
-    document.getElementById('fromDate').addEventListener('change', applyFilters);
-    document.getElementById('toDate').addEventListener('change', applyFilters);
+    typeSel.addEventListener('change',applyFilters);
+    document.getElementById('fromDate').addEventListener('change',applyFilters);
+    document.getElementById('toDate').addEventListener('change',applyFilters);
   </script>
 </body>
 </html>
