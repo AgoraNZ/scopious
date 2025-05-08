@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Farm Alarms Detail</title>
+  <style>
+    /* same variables & basic styles as index.html */
+    :root {
+      --bg: #1e1e1e;
+      --header-bg: #2c2c2c;
+      --row-hover: #333;
+      --text: #f5f5f5;
+      --ok: #2ecc71;
+      --warning: #f39c12;
+      --note: #3498db;
+      --critical: #e74c3c;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; font-family:sans-serif;
+      background:var(--bg); color:var(--text);
+    }
+    .container { max-width:900px; margin:20px auto; padding:0 16px; }
+    h1 { margin-bottom:8px; }
+    .filters {
+      display:flex; gap:12px; margin-bottom:12px;
+    }
+    .filters select,
+    .filters input[type=date] {
+      padding:6px 8px; border:none; border-radius:4px;
+      background:#2c2c2c; color:var(--text);
+    }
+    table { width:100%; border-collapse:collapse; }
+    thead { background:var(--header-bg); }
+    th, td {
+      padding:10px; font-size:0.95rem; text-align:left;
+    }
+    tbody tr { border-top:1px solid #444; }
+    tbody tr:hover { background:var(--row-hover); }
+    .dot {
+      display:inline-block; width:10px; height:10px;
+      border-radius:50%; margin-right:6px; vertical-align:middle;
+    }
+    .status-ok       .dot { background:var(--ok); }
+    .status-warning  .dot { background:var(--warning); }
+    .status-note     .dot { background:var(--note); }
+    .status-critical .dot { background:var(--critical); }
+    td.comment { cursor:text; }
+    td.comment[contenteditable]:focus {
+      outline:2px dashed var(--note);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button onclick="history.back()">← Back</button>
+    <h1 id="farm-title">Farm </h1>
+    <div class="filters">
+      <select id="typeFilter">
+        <option value="">All Alarm Types</option>
+      </select>
+      <input type="date" id="fromDate"/>
+      <input type="date" id="toDate"/>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Alarm Name</th>
+          <th>Time Triggered</th>
+          <th>Comments</th>
+        </tr>
+      </thead>
+      <tbody id="detail-body">
+        <!-- populated by JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // parse supplier# from URL
+    const params = new URLSearchParams(location.search);
+    const farm = params.get('supplier') || 'Unknown';
+    document.getElementById('farm-title').textContent = `Farm ${farm} Alarms`;
+
+    // example full detail dataset
+    const detailData = [
+      // farm 12345
+      { supplier:'12345', status:'Ok',       alarmName:'Milk Collection',      time:'2025-05-08 09:11', comment:'Done' },
+      { supplier:'12345', status:'Ok',       alarmName:'Plate Cooler Fault',   time:'2025-05-05 14:15', comment:'Checked' },
+      { supplier:'12345', status:'Note',     alarmName:'Battery Low Alarm',    time:'2025-05-04 10:30', comment:'Will recharge' },
+      // farm 99887
+      { supplier:'99887', status:'Critical', alarmName:'Temperature Fault',     time:'2025-04-30 12:50', comment:'Replaced sensor' },
+      { supplier:'99887', status:'Warning',  alarmName:'Chiller Condition',    time:'2025-05-03 08:45', comment:'Monitoring' },
+      { supplier:'99887', status:'Ok',       alarmName:'Vat Hot Wash',         time:'2025-05-01 07:25', comment:'Completed' },
+      // you can add more farms here
+    ];
+
+    // filter out only this farm’s records
+    let rows = detailData.filter(r=>r.supplier===farm);
+
+    // populate alarm-type filter dropdown
+    const typeSet = new Set(rows.map(r=>r.alarmName));
+    const typeSel = document.getElementById('typeFilter');
+    typeSet.forEach(n=>{
+      const o = document.createElement('option');
+      o.value = n; o.textContent = n;
+      typeSel.appendChild(o);
+    });
+
+    function renderDetails(data) {
+      const tbody = document.getElementById('detail-body');
+      tbody.innerHTML = '';
+      data.forEach(r=>{
+        const tr = document.createElement('tr');
+        // status
+        const tdSt = document.createElement('td');
+        tdSt.classList.add('status-'+r.status.toLowerCase());
+        tdSt.innerHTML = `<span class="dot"></span>${r.status}`;
+        tr.appendChild(tdSt);
+        // name
+        const tdName = document.createElement('td');
+        tdName.textContent = r.alarmName;
+        tr.appendChild(tdName);
+        // time
+        const tdTime = document.createElement('td');
+        tdTime.textContent = r.time;
+        tr.appendChild(tdTime);
+        // comment editable
+        const tdCom = document.createElement('td');
+        tdCom.contentEditable = true;
+        tdCom.textContent = r.comment;
+        tr.appendChild(tdCom);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // initial render
+    renderDetails(rows);
+
+    // filtering
+    function applyFilters() {
+      const tf = typeSel.value;
+      const from = document.getElementById('fromDate').value;
+      const to   = document.getElementById('toDate').value;
+      let filt = rows;
+      if(tf) filt = filt.filter(r=>r.alarmName===tf);
+      if(from) filt = filt.filter(r=>r.time >= from);
+      if(to)   filt = filt.filter(r=>r.time <= to + ' 23:59');
+      renderDetails(filt);
+    }
+
+    typeSel.addEventListener('change', applyFilters);
+    document.getElementById('fromDate').addEventListener('change', applyFilters);
+    document.getElementById('toDate').addEventListener('change', applyFilters);
+  </script>
+</body>
+</html>
