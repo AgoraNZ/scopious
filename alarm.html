@@ -24,15 +24,14 @@
     .container {
       max-width:1000px; margin:20px auto; padding:0 16px;
     }
-    button.back {
+    .back {
       background:#2c2c2c; border:none;
       color:var(--text); padding:8px 12px;
       border-radius:4px; cursor:pointer;
       margin-bottom:12px;
     }
     h1 {
-      margin:12px 0;
-      font-size:1.3rem;
+      margin:12px 0; font-size:1.3rem;
     }
     .sections {
       display:grid;
@@ -45,8 +44,7 @@
       border-radius:6px; padding:16px;
     }
     .section h2 {
-      margin:0 0 12px;
-      font-size:1.1rem; color:#ccc;
+      margin:0 0 12px; font-size:1.1rem; color:#ccc;
     }
     .filters {
       display:flex; gap:12px; margin-bottom:12px;
@@ -77,7 +75,6 @@
     .status-warning  .dot { background:var(--warning); }
     .status-info     .dot { background:var(--info); }
     .status-critical .dot { background:var(--critical); }
-    td.comment { min-width:120px; }
     .footer-btn {
       text-align:center; margin-top:20px;
     }
@@ -144,44 +141,44 @@
     </div>
   </div>
 
+  <!-- PouchDB for real-time tickets -->
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.1/dist/pouchdb.min.js"></script>
   <script>
-    // ==== ROLE CHECK ====
+    // —— Role enforcement ——
     const currentRole = localStorage.getItem('role') || 'admin';
-    // Hide rule button for non-admin
     if (currentRole !== 'admin') {
       document.getElementById('ruleBtn').style.display = 'none';
     }
 
-    // ==== SETUP ====
+    // —— Read farm from URL ——
+    const params = new URLSearchParams(location.search);
+    const farm    = params.get('supplier') || 'Unknown';
+    document.getElementById('farm-title')
+      .textContent = `Farm ${farm} — Alarms & Tickets`;
+
+    // —— Historical Alarms data —— 
     const ALARMS = {
       info:    ['Milk Collection','Vat Hot Wash'],
       warning: ['Battery Low Alarm'],
       critical:['Plate Cooler Fault','Agitator Fault','Vat Chiller Compressor Fault']
     };
     const historyCfg = {
-      '12345': { criticalOn:null, warningOn:null },
-      '52440': { criticalOn:null, warningOn:null },
-      '44074': { criticalOn:'2025-05-06 05:39', warningOn:null },
-      '35421': { criticalOn:null, warningOn:null },
-      '98765': { criticalOn:null, warningOn:'2025-05-04 10:30' },
-      '24680': { criticalOn:null, warningOn:null },
-      '13579': { criticalOn:null, warningOn:null },
-      '11223': { criticalOn:null, warningOn:null },
-      '99887': { criticalOn:'2025-04-30 12:50', warningOn:null },
-      '55678': { criticalOn:null, warningOn:null }
+      '12345':{criticalOn:null,warningOn:null},
+      '52440':{criticalOn:null,warningOn:null},
+      '44074':{criticalOn:'2025-05-06 05:39',warningOn:null},
+      '35421':{criticalOn:null,warningOn:null},
+      '98765':{criticalOn:null,warningOn:'2025-05-04 10:30'},
+      '24680':{criticalOn:null,warningOn:null},
+      '13579':{criticalOn:null,warningOn:null},
+      '11223':{criticalOn:null,warningOn:null},
+      '99887':{criticalOn:'2025-04-30 12:50',warningOn:null},
+      '55678':{criticalOn:null,warningOn:null}
     };
 
-    // Read farm from URL
-    const params = new URLSearchParams(location.search);
-    const farm    = params.get('supplier') || 'Unknown';
-    document.getElementById('farm-title')
-      .textContent = `Farm ${farm} — Alarms & Tickets`;
-
-    // Build fake alarms history
     function buildAlarms(sup) {
       const cfg = historyCfg[sup]||{};
       const rows = [];
-      for (let i=0; i<10; i++){
+      for (let i=0;i<10;i++){
         const d = new Date();
         d.setDate(d.getDate()-i);
         const ts = d.toISOString().slice(0,16).replace('T',' ');
@@ -199,15 +196,15 @@
     }
     const alarmRows = buildAlarms(farm);
 
-    // Populate filters
+    // populate alarm-type filter
     const typeSel = document.getElementById('typeFilter');
     new Set(alarmRows.map(r=>r.name)).forEach(n=>{
       const o = document.createElement('option');
-      o.value = n; o.textContent = n;
+      o.value=n; o.textContent=n;
       typeSel.appendChild(o);
     });
 
-    // Render alarms
+    // render alarms table
     function renderAlarms(rows) {
       const tb = document.getElementById('alarms-body');
       tb.innerHTML = '';
@@ -225,41 +222,54 @@
     }
     renderAlarms(alarmRows);
 
-    // Alarm filter handlers
-    function applyAlarmsFilter() {
+    // alarm filters
+    function applyAlarmsFilter(){
       let res = alarmRows;
       const t  = typeSel.value;
       const f  = document.getElementById('fromDate').value;
       const to = document.getElementById('toDate').value;
-      if (t)  res = res.filter(r=>r.name===t);
-      if (f)  res = res.filter(r=>r.time>=f);
-      if (to) res = res.filter(r=>r.time<=to+' 23:59');
+      if(t)  res = res.filter(r=>r.name===t);
+      if(f)  res = res.filter(r=>r.time>=f);
+      if(to) res = res.filter(r=>r.time<=to+' 23:59');
       renderAlarms(res);
     }
-    typeSel.addEventListener('change', applyAlarmsFilter);
-    document.getElementById('fromDate').addEventListener('change', applyAlarmsFilter);
-    document.getElementById('toDate').addEventListener('change', applyAlarmsFilter);
+    typeSel.addEventListener('change',applyAlarmsFilter);
+    document.getElementById('fromDate').addEventListener('change',applyAlarmsFilter);
+    document.getElementById('toDate').addEventListener('change',applyAlarmsFilter);
 
-    // Render tickets from localStorage
+    // —— PouchDB setup for tickets ——
+    const localDB  = new PouchDB('tickets');
+    const remoteDB = new PouchDB('https://YOUR-COUCHDB-SERVER/tickets', {skip_setup:true});
+    localDB.sync(remoteDB, { live:true, retry:true })
+      .on('change', renderTickets)
+      .on('error', err=> console.error('Sync error:',err));
+
+    // render tickets table
     function renderTickets() {
-      const all = JSON.parse(localStorage.getItem('tickets')||'[]');
-      const ours = all.filter(t=>t.supplier===farm);
-      const tb = document.getElementById('tickets-body');
-      tb.innerHTML = '';
-      ours.forEach(t=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${t.alertTime}</td>
-          <td>${t.techOpen}</td>
-          <td>${t.openTime}</td>
-          <td>${t.descOpen}</td>
-          <td>${t.techClose||''}</td>
-          <td>${t.closeTime||''}</td>
-          <td>${t.descClose||''}</td>
-        `;
-        tb.appendChild(tr);
-      });
+      localDB.allDocs({ include_docs:true })
+        .then(res=>{
+          const ours = res.rows
+            .map(r=>r.doc)
+            .filter(t=> t.supplier===farm);
+          const tb = document.getElementById('tickets-body');
+          tb.innerHTML = '';
+          ours.forEach(t=>{
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${t.alertTime}</td>
+              <td>${t.techOpen}</td>
+              <td>${t.openTime}</td>
+              <td>${t.descOpen}</td>
+              <td>${t.techClose||''}</td>
+              <td>${t.closeTime||''}</td>
+              <td>${t.descClose||''}</td>
+            `;
+            tb.appendChild(tr);
+          });
+        })
+        .catch(err=> console.error(err));
     }
+    // initial load
     renderTickets();
   </script>
 </body>
