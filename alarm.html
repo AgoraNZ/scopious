@@ -75,15 +75,6 @@
     .status-warning  .dot { background:var(--warning); }
     .status-info     .dot { background:var(--info); }
     .status-critical .dot { background:var(--critical); }
-    .footer-btn {
-      text-align:center; margin-top:20px;
-    }
-    .footer-btn button {
-      padding:10px 20px; font-size:1rem;
-      background:var(--info); color:#fff;
-      border:none; border-radius:4px;
-      cursor:pointer;
-    }
   </style>
 </head>
 <body>
@@ -133,30 +124,18 @@
         </table>
       </div>
     </div>
-
-    <div class="footer-btn">
-      <button id="ruleBtn" onclick="location.href='rules.html'">
-        Create Alarm / Rule
-      </button>
-    </div>
   </div>
 
   <!-- PouchDB for real-time tickets -->
   <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.1/dist/pouchdb.min.js"></script>
   <script>
-    // —— Role enforcement ——
-    const currentRole = localStorage.getItem('role') || 'admin';
-    if (currentRole !== 'admin') {
-      document.getElementById('ruleBtn').style.display = 'none';
-    }
-
-    // —— Read farm from URL ——
+    // Read farm from URL
     const params = new URLSearchParams(location.search);
     const farm    = params.get('supplier') || 'Unknown';
     document.getElementById('farm-title')
       .textContent = `Farm ${farm} — Alarms & Tickets`;
 
-    // —— Historical Alarms data —— 
+    // Historical Alarms setup
     const ALARMS = {
       info:    ['Milk Collection','Vat Hot Wash'],
       warning: ['Battery Low Alarm'],
@@ -174,20 +153,19 @@
       '99887':{criticalOn:'2025-04-30 12:50',warningOn:null},
       '55678':{criticalOn:null,warningOn:null}
     };
-
-    function buildAlarms(sup) {
+    function buildAlarms(sup){
       const cfg = historyCfg[sup]||{};
       const rows = [];
-      for (let i=0;i<10;i++){
+      for(let i=0;i<10;i++){
         const d = new Date();
         d.setDate(d.getDate()-i);
         const ts = d.toISOString().slice(0,16).replace('T',' ');
-        let status, name;
-        if (cfg.criticalOn === ts) {
+        let status,name;
+        if(cfg.criticalOn===ts){
           status='Critical'; name=ALARMS.critical[0];
-        } else if (cfg.warningOn === ts) {
+        } else if(cfg.warningOn===ts){
           status='Warning'; name=ALARMS.warning[0];
-        } else if (i%3===0) {
+        } else if(i%3===0){
           status='Info'; name=ALARMS.info[i%2];
         } else continue;
         rows.push({status,name,time:ts});
@@ -196,7 +174,7 @@
     }
     const alarmRows = buildAlarms(farm);
 
-    // populate alarm-type filter
+    // Populate alarm filter
     const typeSel = document.getElementById('typeFilter');
     new Set(alarmRows.map(r=>r.name)).forEach(n=>{
       const o = document.createElement('option');
@@ -204,13 +182,13 @@
       typeSel.appendChild(o);
     });
 
-    // render alarms table
-    function renderAlarms(rows) {
+    // Render alarms
+    function renderAlarms(rows){
       const tb = document.getElementById('alarms-body');
-      tb.innerHTML = '';
+      tb.innerHTML='';
       rows.forEach(r=>{
         const tr = document.createElement('tr');
-        tr.innerHTML = `
+        tr.innerHTML=`
           <td class="status-${r.status.toLowerCase()}">
             <span class="dot"></span>${r.status}
           </td>
@@ -222,7 +200,7 @@
     }
     renderAlarms(alarmRows);
 
-    // alarm filters
+    // Alarm filters
     function applyAlarmsFilter(){
       let res = alarmRows;
       const t  = typeSel.value;
@@ -237,25 +215,23 @@
     document.getElementById('fromDate').addEventListener('change',applyAlarmsFilter);
     document.getElementById('toDate').addEventListener('change',applyAlarmsFilter);
 
-    // —— PouchDB setup for tickets ——
+    // PouchDB sync for tickets
     const localDB  = new PouchDB('tickets');
-    const remoteDB = new PouchDB('https://YOUR-COUCHDB-SERVER/tickets', {skip_setup:true});
+    const remoteDB = new PouchDB('https://YOUR-COUCHDB-SERVER/tickets', { skip_setup:true });
     localDB.sync(remoteDB, { live:true, retry:true })
       .on('change', renderTickets)
       .on('error', err=> console.error('Sync error:',err));
 
-    // render tickets table
-    function renderTickets() {
+    // Render tickets
+    function renderTickets(){
       localDB.allDocs({ include_docs:true })
         .then(res=>{
-          const ours = res.rows
-            .map(r=>r.doc)
-            .filter(t=> t.supplier===farm);
+          const ours = res.rows.map(r=>r.doc).filter(t=>t.supplier===farm);
           const tb = document.getElementById('tickets-body');
-          tb.innerHTML = '';
+          tb.innerHTML='';
           ours.forEach(t=>{
             const tr = document.createElement('tr');
-            tr.innerHTML = `
+            tr.innerHTML=`
               <td>${t.alertTime}</td>
               <td>${t.techOpen}</td>
               <td>${t.openTime}</td>
@@ -269,7 +245,6 @@
         })
         .catch(err=> console.error(err));
     }
-    // initial load
     renderTickets();
   </script>
 </body>
