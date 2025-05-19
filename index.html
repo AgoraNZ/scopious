@@ -111,6 +111,9 @@
     .card-body {
       flex:1; margin-bottom:12px;
     }
+    .card-body a {
+      text-decoration:none; color:inherit;
+    }
     .status {
       display:inline-flex; align-items:center;
       font-size:0.9rem; padding:4px 8px;
@@ -240,10 +243,8 @@
     const LS_FARMS   = 'farms';
     const LS_TICKETS = 'tickets';
 
-    // Roles: admin / service / processor
     let currentRole = 'admin';
 
-    // Load/save farms
     function loadFarms(){
       let f = JSON.parse(localStorage.getItem(LS_FARMS)||'null');
       if(!f){
@@ -257,8 +258,6 @@
     function saveFarms(arr){
       localStorage.setItem(LS_FARMS, JSON.stringify(arr));
     }
-
-    // Load/save tickets
     function loadTickets(){
       return JSON.parse(localStorage.getItem(LS_TICKETS)||'[]');
     }
@@ -269,10 +268,10 @@
     let farmsList = loadFarms();
     let tickets   = loadTickets();
 
-    // Render summary
+    // Summary
     function renderSummary(){
-      const gw  = farmsList.length;
-      const dev = gw * 4;
+      const gw = farmsList.length;
+      const dev= gw*4;
       document.getElementById('sum-gw').textContent  = gw;
       document.getElementById('sum-dev').textContent = dev;
       document.getElementById('sum-act').textContent = dev;
@@ -280,7 +279,7 @@
     }
     renderSummary();
 
-    // Build overview objects
+    // Build overview data
     function makeOverview(f){
       const cfg = historyCfg[f.supplier]||{};
       let status='Ok', alarm='', time='';
@@ -295,37 +294,36 @@
       .map(makeOverview)
       .sort((a,b)=>{
         const sev={'Critical':3,'Warning':2,'Info':1,'Ok':0};
-        return sev[b.status] - sev[a.status];
+        return sev[b.status]-sev[a.status];
       });
 
-    // Render cards according to role
+    // Render cards
     function renderCards(rows){
       const container = document.getElementById('card-container');
       container.innerHTML = '';
-      rows.forEach(r => {
-        const hasTicket = tickets.find(t=>
+      rows.forEach(r=>{
+        const tk = tickets.find(t=>
           t.supplier===r.supplier && t.alertTime===r.time
         );
         let ticketHTML = '';
-        if(r.status==='Critical' && (currentRole==='admin' || currentRole==='service')){
-          if(!hasTicket) {
+        if(r.status==='Critical' && (currentRole==='admin'||currentRole==='service')){
+          if(!tk){
             ticketHTML = `<button class="btn-ticket" onclick="
               location.href='ticket.html?\
 supplier=${r.supplier}&alertTime=${encodeURIComponent(r.time)}'
             ">Open Ticket</button>`;
-          } else if(!hasTicket.closeTime) {
+          } else if(!tk.closeTime){
             ticketHTML = `<button class="btn-ticket" onclick="
               location.href='ticket.html?\
 supplier=${r.supplier}&alertTime=${encodeURIComponent(r.time)}'
             ">View Ticket</button>`;
           } else {
-            ticketHTML = `<div>Closed: ${hasTicket.closeTime}</div>`;
+            ticketHTML = `<div>Closed: ${tk.closeTime}</div>`;
           }
-        } else if(r.status==='Critical' && currentRole==='processor') {
-          // processor sees status only
-          ticketHTML = hasTicket
-            ? (hasTicket.closeTime
-                ? `Closed: ${hasTicket.closeTime}`
+        } else if(r.status==='Critical' && currentRole==='processor'){
+          ticketHTML = tk
+            ? (tk.closeTime
+                ? `Closed: ${tk.closeTime}`
                 : 'Open')
             : '';
         }
@@ -334,24 +332,26 @@ supplier=${r.supplier}&alertTime=${encodeURIComponent(r.time)}'
         card.className = 'card';
         card.innerHTML = `
           <div class="card-header">
-            <a href="dashboard.html?supplier=${r.supplier}"
-               class="supplier">#${r.supplier}</a>
+            <a href="dashboard.html?supplier=${r.supplier}" class="supplier">
+              #${r.supplier}
+            </a>
             <div class="farm-name">${r.name}</div>
           </div>
           <div class="card-body">
-            <div class="status status-${r.status.toLowerCase()}">
-              <span class="dot"></span>${r.status}
-            </div>
-            <div class="alarm-name">${r.alarm}</div>
-            <div class="time">${r.time}</div>
+            <a href="alarm.html?supplier=${r.supplier}">
+              <div class="status status-${r.status.toLowerCase()}">
+                <span class="dot"></span>${r.status}
+              </div>
+              <div class="alarm-name">${r.alarm}</div>
+              <div class="time">${r.time}</div>
+            </a>
           </div>
           <div class="card-actions">
             ${ticketHTML}
             ${currentRole==='admin'
               ? `<button class="btn-edit" onclick="
                   location.href='setup.html?\
-supplier=${r.supplier}'"
-                >Edit</button>`
+supplier=${r.supplier}'">Edit</button>`
               : ''}
           </div>
         `;
@@ -360,39 +360,31 @@ supplier=${r.supplier}'"
     }
     renderCards(overviewData);
 
-    // Toggle UI elements based on role
+    // Permissions toggle
     function updatePermissions(){
-      // Add-Farm button & form only for admin
       document.getElementById('showAddForm').style.display =
         currentRole==='admin' ? 'inline-block' : 'none';
       document.getElementById('addFarmForm').style.display = 'none';
-      // Rule button only for admin
       document.querySelector('.footer-btn').style.display =
         currentRole==='admin' ? 'block' : 'none';
-      // Re-render cards
       renderCards(overviewData);
     }
-
-    // Listen to role switch
     document.querySelectorAll('input[name="role"]').forEach(radio=>{
       radio.addEventListener('change', e=>{
         currentRole = e.target.value;
         updatePermissions();
       });
     });
-    // initialize
     updatePermissions();
 
-    // Search filter (all roles)
+    // Search
     document.getElementById('search')
       .addEventListener('input', e=>{
         const q = e.target.value.trim();
-        renderCards(
-          overviewData.filter(r=> r.supplier.includes(q))
-        );
+        renderCards(overviewData.filter(r=>r.supplier.includes(q)));
       });
 
-    // Add Farm form logic (admin only)
+    // Add Farm form logic
     const showBtn     = document.getElementById('showAddForm');
     const formDiv     = document.getElementById('addFarmForm');
     const cancelBtn   = document.getElementById('cancelAdd');
@@ -408,8 +400,7 @@ supplier=${r.supplier}'"
           <label>
             <input type="checkbox" id="${id}"
                    value="${name}" checked/> ${name}
-          </label>
-        `;
+          </label>`;
       });
     };
     cancelBtn.onclick = ()=> formDiv.style.display='none';
@@ -424,7 +415,7 @@ supplier=${r.supplier}'"
       const sel=[];
       alarmChkDiv.querySelectorAll('input:checked')
         .forEach(cb=>sel.push(cb.value));
-      const newFarm = { supplier:sup, name:nm, activeAlarms:sel };
+      const newFarm={supplier:sup,name:nm,activeAlarms:sel};
       farmsList.push(newFarm);
       saveFarms(farmsList);
       renderSummary();
