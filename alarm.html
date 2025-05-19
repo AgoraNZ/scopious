@@ -138,12 +138,21 @@
     </div>
 
     <div class="footer-btn">
-      <button onclick="location.href='rules.html'">Create Alarm / Rule</button>
+      <button id="ruleBtn" onclick="location.href='rules.html'">
+        Create Alarm / Rule
+      </button>
     </div>
   </div>
 
   <script>
-    // Alarm data config (as before)
+    // ==== ROLE CHECK ====
+    const currentRole = localStorage.getItem('role') || 'admin';
+    // Hide rule button for non-admin
+    if (currentRole !== 'admin') {
+      document.getElementById('ruleBtn').style.display = 'none';
+    }
+
+    // ==== SETUP ====
     const ALARMS = {
       info:    ['Milk Collection','Vat Hot Wash'],
       warning: ['Battery Low Alarm'],
@@ -162,45 +171,44 @@
       '55678': { criticalOn:null, warningOn:null }
     };
 
-    // Read supplier param
+    // Read farm from URL
     const params = new URLSearchParams(location.search);
     const farm    = params.get('supplier') || 'Unknown';
     document.getElementById('farm-title')
       .textContent = `Farm ${farm} — Alarms & Tickets`;
 
-    // Build alarm rows
+    // Build fake alarms history
     function buildAlarms(sup) {
-      const cfg = historyCfg[sup] || {};
+      const cfg = historyCfg[sup]||{};
       const rows = [];
-      for(let i=0; i<10; i++){
+      for (let i=0; i<10; i++){
         const d = new Date();
         d.setDate(d.getDate()-i);
         const ts = d.toISOString().slice(0,16).replace('T',' ');
         let status, name;
-        if(cfg.criticalOn === ts){
+        if (cfg.criticalOn === ts) {
           status='Critical'; name=ALARMS.critical[0];
-        } else if(cfg.warningOn === ts){
+        } else if (cfg.warningOn === ts) {
           status='Warning'; name=ALARMS.warning[0];
-        } else if(i%3===0){
+        } else if (i%3===0) {
           status='Info'; name=ALARMS.info[i%2];
         } else continue;
         rows.push({status,name,time:ts});
       }
       return rows;
     }
-
     const alarmRows = buildAlarms(farm);
 
-    // Populate alarm type filter
+    // Populate filters
     const typeSel = document.getElementById('typeFilter');
     new Set(alarmRows.map(r=>r.name)).forEach(n=>{
       const o = document.createElement('option');
-      o.value=n; o.textContent=n;
+      o.value = n; o.textContent = n;
       typeSel.appendChild(o);
     });
 
-    // Render alarms table
-    function renderAlarms(rows){
+    // Render alarms
+    function renderAlarms(rows) {
       const tb = document.getElementById('alarms-body');
       tb.innerHTML = '';
       rows.forEach(r=>{
@@ -217,23 +225,23 @@
     }
     renderAlarms(alarmRows);
 
-    // Alarm filters
-    function applyAlarmsFilter(){
+    // Alarm filter handlers
+    function applyAlarmsFilter() {
       let res = alarmRows;
-      const t = typeSel.value;
-      const f = document.getElementById('fromDate').value;
-      const to= document.getElementById('toDate').value;
-      if(t)  res = res.filter(r=>r.name===t);
-      if(f)  res = res.filter(r=>r.time>=f);
-      if(to) res = res.filter(r=>r.time<=to+' 23:59');
+      const t  = typeSel.value;
+      const f  = document.getElementById('fromDate').value;
+      const to = document.getElementById('toDate').value;
+      if (t)  res = res.filter(r=>r.name===t);
+      if (f)  res = res.filter(r=>r.time>=f);
+      if (to) res = res.filter(r=>r.time<=to+' 23:59');
       renderAlarms(res);
     }
-    typeSel.addEventListener('change',applyAlarmsFilter);
-    document.getElementById('fromDate').addEventListener('change',applyAlarmsFilter);
-    document.getElementById('toDate').addEventListener('change',applyAlarmsFilter);
+    typeSel.addEventListener('change', applyAlarmsFilter);
+    document.getElementById('fromDate').addEventListener('change', applyAlarmsFilter);
+    document.getElementById('toDate').addEventListener('change', applyAlarmsFilter);
 
-    // Build and render tickets
-    function renderTickets(){
+    // Render tickets from localStorage
+    function renderTickets() {
       const all = JSON.parse(localStorage.getItem('tickets')||'[]');
       const ours = all.filter(t=>t.supplier===farm);
       const tb = document.getElementById('tickets-body');
