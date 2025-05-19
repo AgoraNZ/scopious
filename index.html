@@ -30,16 +30,13 @@
       background:var(--panel-bg);
       border:1px solid var(--border);
       border-radius:6px;
-      padding:12px;
-      margin-bottom:20px;
+      padding:12px; margin-bottom:20px;
     }
     .summary-row {
       display:flex; justify-content:space-between;
       font-size:0.9rem;
     }
-    .summary-row div {
-      flex:1; text-align:center;
-    }
+    .summary-row div { flex:1; text-align:center; }
 
     /* Add Farm */
     .add-farm-btn { margin-bottom:12px; text-align:right; }
@@ -50,16 +47,15 @@
     }
     #addFarmForm {
       display:none; background:var(--panel-bg);
-      border:1px solid var(--border); border-radius:6px;
-      padding:12px; margin-bottom:16px;
+      border:1px solid var(--border);
+      border-radius:6px; padding:12px; margin-bottom:16px;
     }
     #addFarmForm label {
       display:block; margin-bottom:8px; font-size:0.9rem;
     }
     #addFarmForm input[type="text"] {
       width:100%; padding:6px; border:1px solid #555;
-      border-radius:4px; background:#333;
-      color:var(--text);
+      border-radius:4px; background:#333; color:var(--text);
     }
     .alarms-list {
       display:grid; grid-template-columns:1fr 1fr;
@@ -110,19 +106,15 @@
       font-size:1rem;
     }
     .card-header .farm-name {
-      color:#bbb;
-      font-size:0.9rem;
+      color:#bbb; font-size:0.9rem;
     }
     .card-body {
       flex:1; margin-bottom:12px;
     }
     .status {
-      display:inline-flex;
-      align-items:center;
-      font-size:0.9rem;
-      padding:4px 8px;
-      border-radius:4px;
-      color:#fff;
+      display:inline-flex; align-items:center;
+      font-size:0.9rem; padding:4px 8px;
+      border-radius:4px; color:#fff;
       margin-bottom:8px;
     }
     .status-ok       { background:var(--ok); }
@@ -141,16 +133,26 @@
       display:flex; gap:8px;
     }
     .card-actions button {
-      flex:1; padding:6px 8px;
-      font-size:0.9rem; border:none;
-      border-radius:4px; cursor:pointer;
+      flex:1; padding:6px 8px; font-size:0.9rem;
+      border:none; border-radius:4px; cursor:pointer;
     }
     .btn-ticket { background:var(--critical); color:#fff; }
     .btn-edit   { background:#3498db; color:#fff; }
 
+    /* Permissions */
+    .permissions {
+      margin:24px 0; text-align:center; font-size:0.9rem;
+    }
+    .permissions label {
+      margin:0 12px; cursor:pointer;
+    }
+    .permissions input {
+      margin-right:4px;
+    }
+
     /* Footer */
     .footer-btn {
-      text-align:center; margin:24px 0;
+      text-align:center; margin-bottom:24px;
     }
     .footer-btn button {
       padding:10px 20px; font-size:1rem;
@@ -203,11 +205,16 @@
     <!-- Cards -->
     <div class="cards" id="card-container"></div>
 
+    <!-- Permissions -->
+    <div class="permissions">
+      <label><input type="radio" name="role" value="admin" checked> Admin</label>
+      <label><input type="radio" name="role" value="service"> Service</label>
+      <label><input type="radio" name="role" value="processor"> Processor</label>
+    </div>
+
     <!-- Create Rule -->
     <div class="footer-btn">
-      <button onclick="location.href='rules.html'">
-        Create Alarm / Rule
-      </button>
+      <button onclick="location.href='rules.html'">Create Alarm / Rule</button>
     </div>
   </div>
 
@@ -230,8 +237,13 @@
       '99887':{criticalOn:'2025-04-30 12:50',warningOn:null},
       '55678':{criticalOn:null,warningOn:null}
     };
-    const LS_FARMS = 'farms', LS_TICKETS='tickets';
+    const LS_FARMS   = 'farms';
+    const LS_TICKETS = 'tickets';
 
+    // Roles: admin / service / processor
+    let currentRole = 'admin';
+
+    // Load/save farms
     function loadFarms(){
       let f = JSON.parse(localStorage.getItem(LS_FARMS)||'null');
       if(!f){
@@ -245,6 +257,8 @@
     function saveFarms(arr){
       localStorage.setItem(LS_FARMS, JSON.stringify(arr));
     }
+
+    // Load/save tickets
     function loadTickets(){
       return JSON.parse(localStorage.getItem(LS_TICKETS)||'[]');
     }
@@ -255,21 +269,21 @@
     let farmsList = loadFarms();
     let tickets   = loadTickets();
 
-    // Summary
+    // Render summary
     function renderSummary(){
-      const gw = farmsList.length;
-      const dev = gw*4;
-      document.getElementById('sum-gw').textContent = gw;
+      const gw  = farmsList.length;
+      const dev = gw * 4;
+      document.getElementById('sum-gw').textContent  = gw;
       document.getElementById('sum-dev').textContent = dev;
       document.getElementById('sum-act').textContent = dev;
       document.getElementById('sum-inact').textContent = 0;
     }
     renderSummary();
 
-    // Build overview
+    // Build overview objects
     function makeOverview(f){
       const cfg = historyCfg[f.supplier]||{};
-      let status='Ok',alarm='',time='';
+      let status='Ok', alarm='', time='';
       if(cfg.criticalOn){
         status='Critical'; alarm='temperature fault'; time=cfg.criticalOn;
       } else if(cfg.warningOn){
@@ -281,41 +295,47 @@
       .map(makeOverview)
       .sort((a,b)=>{
         const sev={'Critical':3,'Warning':2,'Info':1,'Ok':0};
-        return sev[b.status]-sev[a.status];
+        return sev[b.status] - sev[a.status];
       });
 
-    // Render cards
+    // Render cards according to role
     function renderCards(rows){
       const container = document.getElementById('card-container');
       container.innerHTML = '';
-      rows.forEach(r=>{
-        const tk = tickets.find(t=>
+      rows.forEach(r => {
+        const hasTicket = tickets.find(t=>
           t.supplier===r.supplier && t.alertTime===r.time
         );
-        let ticketBtn = '';
-        if(r.status==='Critical'){
-          if(!tk){
-            ticketBtn = `<button class="btn-ticket" onclick="
+        let ticketHTML = '';
+        if(r.status==='Critical' && (currentRole==='admin' || currentRole==='service')){
+          if(!hasTicket) {
+            ticketHTML = `<button class="btn-ticket" onclick="
               location.href='ticket.html?\
 supplier=${r.supplier}&alertTime=${encodeURIComponent(r.time)}'
             ">Open Ticket</button>`;
-          } else if(!tk.closeTime){
-            ticketBtn = `<button class="btn-ticket" onclick="
+          } else if(!hasTicket.closeTime) {
+            ticketHTML = `<button class="btn-ticket" onclick="
               location.href='ticket.html?\
 supplier=${r.supplier}&alertTime=${encodeURIComponent(r.time)}'
             ">View Ticket</button>`;
           } else {
-            ticketBtn = `<div>Closed: ${tk.closeTime}</div>`;
+            ticketHTML = `<div>Closed: ${hasTicket.closeTime}</div>`;
           }
+        } else if(r.status==='Critical' && currentRole==='processor') {
+          // processor sees status only
+          ticketHTML = hasTicket
+            ? (hasTicket.closeTime
+                ? `Closed: ${hasTicket.closeTime}`
+                : 'Open')
+            : '';
         }
+
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
           <div class="card-header">
             <a href="dashboard.html?supplier=${r.supplier}"
-               class="supplier">
-              #${r.supplier}
-            </a>
+               class="supplier">#${r.supplier}</a>
             <div class="farm-name">${r.name}</div>
           </div>
           <div class="card-body">
@@ -326,11 +346,13 @@ supplier=${r.supplier}&alertTime=${encodeURIComponent(r.time)}'
             <div class="time">${r.time}</div>
           </div>
           <div class="card-actions">
-            ${ticketBtn}
-            <button class="btn-edit"
-              onclick="location.href='setup.html?\
+            ${ticketHTML}
+            ${currentRole==='admin'
+              ? `<button class="btn-edit" onclick="
+                  location.href='setup.html?\
 supplier=${r.supplier}'"
-            >Edit</button>
+                >Edit</button>`
+              : ''}
           </div>
         `;
         container.appendChild(card);
@@ -338,14 +360,39 @@ supplier=${r.supplier}'"
     }
     renderCards(overviewData);
 
-    // Search
+    // Toggle UI elements based on role
+    function updatePermissions(){
+      // Add-Farm button & form only for admin
+      document.getElementById('showAddForm').style.display =
+        currentRole==='admin' ? 'inline-block' : 'none';
+      document.getElementById('addFarmForm').style.display = 'none';
+      // Rule button only for admin
+      document.querySelector('.footer-btn').style.display =
+        currentRole==='admin' ? 'block' : 'none';
+      // Re-render cards
+      renderCards(overviewData);
+    }
+
+    // Listen to role switch
+    document.querySelectorAll('input[name="role"]').forEach(radio=>{
+      radio.addEventListener('change', e=>{
+        currentRole = e.target.value;
+        updatePermissions();
+      });
+    });
+    // initialize
+    updatePermissions();
+
+    // Search filter (all roles)
     document.getElementById('search')
       .addEventListener('input', e=>{
         const q = e.target.value.trim();
-        renderCards(overviewData.filter(r=>r.supplier.includes(q)));
+        renderCards(
+          overviewData.filter(r=> r.supplier.includes(q))
+        );
       });
 
-    // Add Farm
+    // Add Farm form logic (admin only)
     const showBtn     = document.getElementById('showAddForm');
     const formDiv     = document.getElementById('addFarmForm');
     const cancelBtn   = document.getElementById('cancelAdd');
@@ -359,8 +406,8 @@ supplier=${r.supplier}'"
         const id = `chk_${name.replace(/\s+/g,'')}`;
         alarmChkDiv.innerHTML += `
           <label>
-            <input type="checkbox" id="${id}" value="${name}" checked/>
-            ${name}
+            <input type="checkbox" id="${id}"
+                   value="${name}" checked/> ${name}
           </label>
         `;
       });
@@ -377,7 +424,7 @@ supplier=${r.supplier}'"
       const sel=[];
       alarmChkDiv.querySelectorAll('input:checked')
         .forEach(cb=>sel.push(cb.value));
-      const newFarm={supplier:sup,name:nm,activeAlarms:sel};
+      const newFarm = { supplier:sup, name:nm, activeAlarms:sel };
       farmsList.push(newFarm);
       saveFarms(farmsList);
       renderSummary();
