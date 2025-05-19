@@ -24,7 +24,7 @@
     .container {
       max-width:1000px; margin:20px auto; padding:0 16px;
     }
-    .back {
+    .back-btn {
       background:#2c2c2c; border:none;
       color:var(--text); padding:8px 12px;
       border-radius:4px; cursor:pointer;
@@ -79,12 +79,12 @@
 </head>
 <body>
   <div class="container">
-    <button class="back" onclick="history.back()">← Back to Overview</button>
+    <button class="back-btn" onclick="history.back()">← Back to Overview</button>
     <h1 id="farm-title">Farm Alarms & Tickets</h1>
 
     <div class="sections">
-      <!-- Left: Historical Alarms -->
-      <div class="section" id="alarms-section">
+      <!-- Historical Alarms -->
+      <div class="section">
         <h2>Historical Alarms</h2>
         <div class="filters">
           <select id="typeFilter">
@@ -105,8 +105,8 @@
         </table>
       </div>
 
-      <!-- Right: Historical Tickets -->
-      <div class="section" id="tickets-section">
+      <!-- Historical Tickets -->
+      <div class="section">
         <h2>Historical Tickets</h2>
         <table>
           <thead>
@@ -129,13 +129,13 @@
   <!-- PouchDB for real-time tickets -->
   <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.1/dist/pouchdb.min.js"></script>
   <script>
-    // Read farm from URL
+    // 1) Set the farm title from URL
     const params = new URLSearchParams(location.search);
-    const farm    = params.get('supplier') || 'Unknown';
+    const farm = params.get('supplier') || 'Unknown';
     document.getElementById('farm-title')
       .textContent = `Farm ${farm} — Alarms & Tickets`;
 
-    // Historical Alarms setup
+    // 2) Build & render Historical Alarms
     const ALARMS = {
       info:    ['Milk Collection','Vat Hot Wash'],
       warning: ['Battery Low Alarm'],
@@ -153,20 +153,20 @@
       '99887':{criticalOn:'2025-04-30 12:50',warningOn:null},
       '55678':{criticalOn:null,warningOn:null}
     };
-    function buildAlarms(sup){
-      const cfg = historyCfg[sup]||{};
+    function buildAlarms(s) {
+      const cfg = historyCfg[s]||{};
       const rows = [];
-      for(let i=0;i<10;i++){
+      for (let i=0;i<10;i++){
         const d = new Date();
         d.setDate(d.getDate()-i);
         const ts = d.toISOString().slice(0,16).replace('T',' ');
         let status,name;
-        if(cfg.criticalOn===ts){
-          status='Critical'; name=ALARMS.critical[0];
-        } else if(cfg.warningOn===ts){
-          status='Warning'; name=ALARMS.warning[0];
-        } else if(i%3===0){
-          status='Info'; name=ALARMS.info[i%2];
+        if (cfg.criticalOn === ts) {
+          status = 'Critical'; name = ALARMS.critical[0];
+        } else if (cfg.warningOn === ts) {
+          status = 'Warning';  name = ALARMS.warning[0];
+        } else if (i%3===0) {
+          status = 'Info';     name = ALARMS.info[i%2];
         } else continue;
         rows.push({status,name,time:ts});
       }
@@ -174,21 +174,20 @@
     }
     const alarmRows = buildAlarms(farm);
 
-    // Populate alarm filter
+    // populate filter
     const typeSel = document.getElementById('typeFilter');
     new Set(alarmRows.map(r=>r.name)).forEach(n=>{
       const o = document.createElement('option');
-      o.value=n; o.textContent=n;
+      o.value = n; o.textContent = n;
       typeSel.appendChild(o);
     });
 
-    // Render alarms
-    function renderAlarms(rows){
+    function renderAlarms(rows) {
       const tb = document.getElementById('alarms-body');
-      tb.innerHTML='';
+      tb.innerHTML = '';
       rows.forEach(r=>{
         const tr = document.createElement('tr');
-        tr.innerHTML=`
+        tr.innerHTML = `
           <td class="status-${r.status.toLowerCase()}">
             <span class="dot"></span>${r.status}
           </td>
@@ -200,38 +199,40 @@
     }
     renderAlarms(alarmRows);
 
-    // Alarm filters
     function applyAlarmsFilter(){
       let res = alarmRows;
       const t  = typeSel.value;
       const f  = document.getElementById('fromDate').value;
       const to = document.getElementById('toDate').value;
-      if(t)  res = res.filter(r=>r.name===t);
-      if(f)  res = res.filter(r=>r.time>=f);
-      if(to) res = res.filter(r=>r.time<=to+' 23:59');
+      if (t)  res = res.filter(r=>r.name===t);
+      if (f)  res = res.filter(r=>r.time>=f);
+      if (to) res = res.filter(r=>r.time<=to+' 23:59');
       renderAlarms(res);
     }
     typeSel.addEventListener('change',applyAlarmsFilter);
-    document.getElementById('fromDate').addEventListener('change',applyAlarmsFilter);
-    document.getElementById('toDate').addEventListener('change',applyAlarmsFilter);
+    document.getElementById('fromDate')
+      .addEventListener('change',applyAlarmsFilter);
+    document.getElementById('toDate')
+      .addEventListener('change',applyAlarmsFilter);
 
-    // PouchDB sync for tickets
+    // 3) Real-time Historical Tickets via PouchDB/CouchDB
     const localDB  = new PouchDB('tickets');
-    const remoteDB = new PouchDB('https://YOUR-COUCHDB-SERVER/tickets', { skip_setup:true });
+    const remoteDB = new PouchDB('https://YOUR-COUCHDB-SERVER/tickets', { skip_setup: true });
     localDB.sync(remoteDB, { live:true, retry:true })
       .on('change', renderTickets)
-      .on('error', err=> console.error('Sync error:',err));
+      .on('error', err=> console.error('Sync error:', err));
 
-    // Render tickets
     function renderTickets(){
       localDB.allDocs({ include_docs:true })
         .then(res=>{
-          const ours = res.rows.map(r=>r.doc).filter(t=>t.supplier===farm);
+          const ours = res.rows
+            .map(r=>r.doc)
+            .filter(t=> t.supplier===farm);
           const tb = document.getElementById('tickets-body');
-          tb.innerHTML='';
+          tb.innerHTML = '';
           ours.forEach(t=>{
             const tr = document.createElement('tr');
-            tr.innerHTML=`
+            tr.innerHTML = `
               <td>${t.alertTime}</td>
               <td>${t.techOpen}</td>
               <td>${t.openTime}</td>
