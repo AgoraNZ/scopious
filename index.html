@@ -17,125 +17,112 @@
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0;
-      font-family: sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      margin:0; font-family:sans-serif;
+      background:var(--bg); color:var(--text);
     }
     .container {
-      max-width: 960px;
-      margin: 20px auto;
-      padding: 0 16px;
+      max-width:960px; margin:20px auto; padding:0 16px;
     }
-    h1 { margin-bottom: 12px; }
+    h1 { margin-bottom:12px; }
 
-    /* Summary table */
+    /* Summary */
     .summary table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
+      width:100%; border-collapse:collapse; margin-bottom:20px;
     }
-    .summary thead {
-      background: var(--header-bg);
-    }
+    .summary thead { background:var(--header-bg); }
     .summary th, .summary td {
-      padding: 8px;
-      font-size: 0.9rem;
-      text-align: left;
-      color: var(--text);
-      border-bottom: 1px solid #444;
+      padding:8px; font-size:0.9rem;
+      text-align:left; color:var(--text);
+      border-bottom:1px solid #444;
     }
 
     /* Add Farm */
-    .add-farm-btn { margin-bottom: 12px; }
+    .add-farm-btn { margin-bottom:12px; }
     .add-farm-btn button {
-      padding: 8px 12px; background: #3498db;
-      border: none; color: #fff; border-radius: 4px;
-      cursor: pointer;
+      padding:8px 12px; background:#3498db;
+      border:none; color:#fff; border-radius:4px;
+      cursor:pointer;
     }
     #addFarmForm {
-      display: none; background: #222;
-      border: 1px solid #444; padding: 12px;
-      border-radius: 6px; margin-bottom: 16px;
+      display:none; background:#222;
+      border:1px solid #444; padding:12px;
+      border-radius:6px; margin-bottom:16px;
     }
     #addFarmForm label {
-      display: block; color: var(--text);
-      margin-bottom: 6px;
+      display:block; margin-bottom:6px; color:var(--text);
     }
     #addFarmForm input[type="text"] {
-      width: 100%; padding: 6px;
-      border: 1px solid #555; background: #333;
-      color: var(--text); border-radius: 4px;
-      margin-bottom: 12px;
+      width:100%; padding:6px; border:1px solid #555;
+      background:#333; color:var(--text);
+      border-radius:4px; margin-bottom:12px;
     }
     .alarms-list {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 4px; margin-bottom: 12px;
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:4px; margin-bottom:12px;
     }
     .alarms-list label {
-      display: flex; align-items: center;
-      font-size: 0.9rem;
+      display:flex; align-items:center;
+      font-size:0.9rem;
     }
-    .alarms-list input { margin-right: 6px; }
+    .alarms-list input { margin-right:6px; }
     #addFarmForm .buttons {
-      text-align: right;
+      text-align:right;
     }
     #addFarmForm .buttons button {
-      padding: 6px 10px; margin-left: 8px;
-      border: none; border-radius: 4px; cursor: pointer;
+      padding:6px 10px; margin-left:8px;
+      border:none; border-radius:4px; cursor:pointer;
+      background:#3498db; color:#fff;
     }
 
-    /* Search & Overview */
-    .search { margin-bottom: 12px; }
+    /* Search & table */
+    .search { margin-bottom:12px; }
     .search input {
-      width: 100%; padding: 8px 12px;
-      border: none; border-radius: 4px;
-      background: #2c2c2c; color: var(--text);
+      width:100%; padding:8px 12px;
+      border:none; border-radius:4px;
+      background:#2c2c2c; color:var(--text);
     }
     table.overview {
-      width: 100%; border-collapse: collapse;
+      width:100%; border-collapse:collapse;
     }
-    thead.overview {
-      background: var(--header-bg);
-    }
+    thead.overview { background:var(--header-bg); }
     th.overview, td.overview {
-      padding: 10px; text-align: left;
-      font-size: 0.95rem; color: var(--text);
-      border-bottom: 1px solid #444;
+      padding:10px; text-align:left;
+      font-size:0.95rem; color:var(--text);
+      border-bottom:1px solid #444;
     }
     tbody.overview tr:hover {
-      background: var(--row-hover);
+      background:var(--row-hover);
     }
     .dot {
-      display: inline-block; width: 10px; height: 10px;
-      border-radius: 50%; margin-right: 6px;
-      vertical-align: middle;
+      display:inline-block; width:10px; height:10px;
+      border-radius:50%; margin-right:6px;
+      vertical-align:middle;
     }
-    .status-ok       .dot { background: var(--ok); }
-    .status-warning  .dot { background: var(--warning); }
-    .status-info     .dot { background: var(--info); }
-    .status-critical .dot { background: var(--critical); }
+    .status-ok       .dot { background:var(--ok); }
+    .status-warning  .dot { background:var(--warning); }
+    .status-info     .dot { background:var(--info); }
+    .status-critical .dot { background:var(--critical); }
     table.overview a {
-      color: var(--text) !important;
-      text-decoration: none;
-      display: block; width: 100%; height: 100%;
+      color:var(--text)!important;
+      text-decoration:none;
+      display:block; width:100%; height:100%;
     }
-    td.comment { min-width: 120px; }
+    td.comment, td.ticket { min-width:120px; }
     td.actions button {
-      padding: 4px 8px; background: #3498db;
-      border: none; color: #fff; border-radius: 4px;
-      cursor: pointer;
+      padding:4px 8px; background:#3498db;
+      border:none; color:#fff; border-radius:4px;
+      cursor:pointer;
     }
 
     /* Footer */
     .footer-btn {
-      text-align: center; margin-top: 20px;
+      text-align:center; margin-top:20px;
     }
     .footer-btn button {
-      padding: 10px 20px; font-size: 1rem;
-      border: none; border-radius: 4px;
-      background: #3498db; color: #fff;
-      cursor: pointer;
+      padding:10px 20px; font-size:1rem;
+      border:none; border-radius:4px;
+      background:#3498db; color:#fff;
+      cursor:pointer;
     }
   </style>
 </head>
@@ -143,7 +130,7 @@
   <div class="container">
     <h1>Dairy Farm Alerts Overview</h1>
 
-    <!-- Summary Table -->
+    <!-- Summary -->
     <div class="summary">
       <table>
         <thead>
@@ -156,18 +143,14 @@
             <th>Inactive Devices</th>
           </tr>
         </thead>
-        <tbody id="summary-body">
-          <!-- filled by JS -->
-        </tbody>
+        <tbody id="summary-body"></tbody>
       </table>
     </div>
 
-    <!-- Add Farm Button -->
+    <!-- Add Farm -->
     <div class="add-farm-btn">
       <button id="showAddForm">Add Farm</button>
     </div>
-
-    <!-- Add Farm Form -->
     <div id="addFarmForm">
       <label>Supplier Number:
         <input type="text" id="newSupplier" placeholder="e.g. 12345"/>
@@ -206,141 +189,130 @@
       <tbody id="overview-body"></tbody>
     </table>
 
-    <!-- Create Rule Button -->
+    <!-- Create Rule -->
     <div class="footer-btn">
-      <button onclick="location.href='rules.html'">Create Alarm / Rule</button>
+      <button onclick="location.href='rules.html'">
+        Create Alarm / Rule
+      </button>
     </div>
   </div>
 
   <script>
     // Alarm types
     const ALARMS = [
-      'Milk Collection',
-      'Plate Cooler Fault',
-      'Vat Chiller Compressor Fault',
-      'Agitator Fault',
-      'Vat Hot Wash',
-      'Battery Low Alarm',
-      'Chiller Condition',
-      'temperature fault'
+      'Milk Collection','Plate Cooler Fault',
+      'Vat Chiller Compressor Fault','Agitator Fault',
+      'Vat Hot Wash','Battery Low Alarm',
+      'Chiller Condition','temperature fault'
     ];
 
-    // Pre-configured event history
+    // Pre-configured alert history
     const historyCfg = {
-      '12345': {criticalOn:null, warningOn:null},
-      '52440': {criticalOn:null, warningOn:null},
-      '44074': {criticalOn:'2025-05-06 05:39', warningOn:null},
-      '35421': {criticalOn:null, warningOn:null},
-      '98765': {criticalOn:null, warningOn:'2025-05-04 10:30'},
-      '24680': {criticalOn:null, warningOn:null},
-      '13579': {criticalOn:null, warningOn:null},
-      '11223': {criticalOn:null, warningOn:null},
-      '99887': {criticalOn:'2025-04-30 12:50', warningOn:null},
-      '55678': {criticalOn:null, warningOn:null}
+      '12345':{criticalOn:null,warningOn:null},
+      '52440':{criticalOn:null,warningOn:null},
+      '44074':{criticalOn:'2025-05-06 05:39',warningOn:null},
+      '35421':{criticalOn:null,warningOn:null},
+      '98765':{criticalOn:null,warningOn:'2025-05-04 10:30'},
+      '24680':{criticalOn:null,warningOn:null},
+      '13579':{criticalOn:null,warningOn:null},
+      '11223':{criticalOn:null,warningOn:null},
+      '99887':{criticalOn:'2025-04-30 12:50',warningOn:null},
+      '55678':{criticalOn:null,warningOn:null}
     };
 
     // LocalStorage keys
-    const LS_FARMS = 'farms';
+    const LS_FARMS   = 'farms';
     const LS_TICKETS = 'tickets';
 
+    // load/save farms
     function loadFarms(){
-      let f = JSON.parse(localStorage.getItem(LS_FARMS)||'null');
-      if(!f){
-        f = Object.keys(historyCfg).map(s=>({
-          supplier:s,
-          name:'',
-          activeAlarms:[...ALARMS]
-        }));
-        localStorage.setItem(LS_FARMS, JSON.stringify(f));
-      }
-      return f;
+      const stored = localStorage.getItem(LS_FARMS);
+      if(stored) return JSON.parse(stored);
+      const initial = Object.keys(historyCfg).map(s=>({
+        supplier:s,name:'',activeAlarms:[...ALARMS]
+      }));
+      localStorage.setItem(LS_FARMS, JSON.stringify(initial));
+      return initial;
     }
-    function saveFarms(f){
-      localStorage.setItem(LS_FARMS, JSON.stringify(f));
+    function saveFarms(arr){
+      localStorage.setItem(LS_FARMS, JSON.stringify(arr));
     }
 
+    // load/save tickets
     function loadTickets(){
-      return JSON.parse(localStorage.getItem(LS_TICKETS)||'[]');
+      return JSON.parse(localStorage.getItem(LS_TICKETS) || '[]');
     }
-    function saveTickets(t){
-      localStorage.setItem(LS_TICKETS, JSON.stringify(t));
+    function saveTickets(arr){
+      localStorage.setItem(LS_TICKETS, JSON.stringify(arr));
     }
 
     let farmsList = loadFarms();
     let tickets   = loadTickets();
 
-    // Render Summary
+    // render summary (one row)
     function renderSummary(){
       const sb = document.getElementById('summary-body');
-      const totalGateways   = farmsList.length;
-      const sensorsPerFarm  = 4;
-      const totalDevices    = totalGateways * sensorsPerFarm;
-      const activeDevices   = totalDevices;
-      const inactiveDevices = 0;
+      const gateways = farmsList.length;
+      const devices  = gateways * 4;
       sb.innerHTML = `
         <tr>
           <td>All Farms</td>
           <td>Active</td>
-          <td>${totalGateways}</td>
-          <td>${totalDevices}</td>
-          <td>${activeDevices}</td>
-          <td>${inactiveDevices}</td>
+          <td>${gateways}</td>
+          <td>${devices}</td>
+          <td>${devices}</td>
+          <td>0</td>
         </tr>
       `;
     }
     renderSummary();
 
-    // Build overview data
+    // build overview data
     function makeOverview(f){
       const cfg = historyCfg[f.supplier]||{};
-      let status='Ok', alarmName='', time='';
+      let status='Ok', alarm='', time='';
       if(cfg.criticalOn){
-        status='Critical'; alarmName='temperature fault';
-        time=cfg.criticalOn;
+        status='Critical'; alarm='temperature fault'; time=cfg.criticalOn;
       } else if(cfg.warningOn){
-        status='Warning'; alarmName='Battery Low Alarm';
-        time=cfg.warningOn;
+        status='Warning'; alarm='Battery Low Alarm'; time=cfg.warningOn;
       }
-      return {...f, status, alarmName, time};
+      return {...f,status,alarm,time};
     }
-
     let overviewData = farmsList
       .map(makeOverview)
       .sort((a,b)=>{
-        const sev={Critical:3,Warning:2,Info:1,Ok:0};
+        const sev={'Critical':3,'Warning':2,'Info':1,'Ok':0};
         return sev[b.status]-sev[a.status];
       });
 
-    // Render Overview
+    // render overview
     function renderOverview(rows){
       const tb = document.getElementById('overview-body');
       tb.innerHTML = '';
       rows.forEach(r=>{
-        const tr = document.createElement('tr');
-        // find matching ticket
-        const ticket = tickets.find(t=>
+        // find ticket for this alert
+        const tk = tickets.find(t=>
           t.supplier===r.supplier && t.alertTime===r.time
         );
-        // build Ticket cell
-        let ticketHTML = '';
+        let ticketCell = '';
         if(r.status==='Critical'){
-          if(!ticket){
-            ticketHTML = `<button onclick="
+          if(!tk){
+            ticketCell = `<button onclick="
               location.href='ticket.html?
               supplier=${r.supplier}&
               alertTime=${encodeURIComponent(r.time)}'
             ">Open Ticket</button>`;
-          } else if(!ticket.closeTime){
-            ticketHTML = `<button onclick="
+          } else if(!tk.closeTime){
+            ticketCell = `<button onclick="
               location.href='ticket.html?
               supplier=${r.supplier}&
               alertTime=${encodeURIComponent(r.time)}'
             ">View Ticket</button>`;
           } else {
-            ticketHTML = `Closed: ${ticket.closeTime}`;
+            ticketCell = `Closed: ${tk.closeTime}`;
           }
         }
-
+        const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
             <a href="dashboard.html?supplier=${r.supplier}">
@@ -355,7 +327,7 @@
           </td>
           <td>
             <a href="alarm.html?supplier=${r.supplier}">
-              ${r.alarmName}
+              ${r.alarm}
             </a>
           </td>
           <td>
@@ -363,10 +335,11 @@
               ${r.time}
             </a>
           </td>
-          <td class="ticket">${ticketHTML}</td>
+          <td class="ticket">${ticketCell}</td>
           <td class="actions">
-            <button onclick="location.href='setup.html?
-              supplier=${r.supplier}'">Edit</button>
+            <button onclick="location.href='setup.html?supplier=${r.supplier}'">
+              Edit
+            </button>
           </td>
         `;
         tb.appendChild(tr);
@@ -374,16 +347,16 @@
     }
     renderOverview(overviewData);
 
-    // Live search
+    // search filter
     document.getElementById('search')
       .addEventListener('input', e=>{
-        const q = e.target.value.trim();
+        const q=e.target.value.trim();
         renderOverview(
-          overviewData.filter(r=> r.supplier.includes(q))
+          overviewData.filter(r=>r.supplier.includes(q))
         );
       });
 
-    // Add Farm form logic (unchanged)...
+    // Add Farm form logic
     const showBtn     = document.getElementById('showAddForm');
     const formDiv     = document.getElementById('addFarmForm');
     const cancelBtn   = document.getElementById('cancelAdd');
@@ -392,7 +365,7 @@
 
     showBtn.onclick = ()=>{
       formDiv.style.display='block';
-      alarmChkDiv.innerHTML = '';
+      alarmChkDiv.innerHTML='';
       ALARMS.forEach(name=>{
         const id = `chk_${name.replace(/\s+/g,'')}`;
         alarmChkDiv.innerHTML += `
@@ -413,15 +386,17 @@
       }
       const sel=[];
       alarmChkDiv.querySelectorAll('input:checked')
-        .forEach(cb=> sel.push(cb.value));
-      const newFarm={ supplier:sup, name:nm, activeAlarms:sel };
+        .forEach(cb=>sel.push(cb.value));
+      const newFarm={ supplier:sup,name:nm,activeAlarms:sel };
       farmsList.push(newFarm);
       saveFarms(farmsList);
       renderSummary();
       overviewData = farmsList
         .map(makeOverview)
-        .sort((a,b)=>({Critical:3,Warning:2,Info:1,Ok:0}[b.status]
-                     -({Critical:3,Warning:2,Info:1,Ok:0}[a.status])));
+        .sort((a,b)=>
+          ({Critical:3,Warning:2,Info:1,Ok:0}[b.status]
+          -({Critical:3,Warning:2,Info:1,Ok:0}[a.status]))
+        );
       renderOverview(overviewData);
       formDiv.style.display='none';
       document.getElementById('newSupplier').value='';
