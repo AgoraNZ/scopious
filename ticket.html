@@ -6,59 +6,38 @@
   <title>Ticket Management</title>
   <style>
     body {
-      margin: 0;
-      font-family: sans-serif;
-      background: #1e1e1e;
-      color: #f5f5f5;
+      margin:0; font-family:sans-serif;
+      background:#1e1e1e; color:#f5f5f5;
     }
     .container {
-      max-width: 500px;
-      margin: 40px auto;
-      padding: 0 16px;
+      max-width:500px; margin:40px auto; padding:0 16px;
     }
-    h1 {
-      margin-bottom: 16px;
-      font-size: 1.3rem;
-    }
-    h2, h3 {
-      margin: 16px 0 8px;
-      font-size: 1.1rem;
-      color: #ddd;
+    h1 { margin-bottom:16px; }
+    h2,h3 {
+      margin:16px 0 8px; font-size:1.1rem; color:#ddd;
     }
     label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 0.9rem;
+      display:block; margin-bottom:8px; font-size:0.9rem;
     }
     input, textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #444;
-      border-radius: 4px;
-      background: #2c2c2c;
-      color: #f5f5f5;
-      margin-bottom: 12px;
-      font-size: 0.9rem;
+      width:100%; padding:8px;
+      border:1px solid #444; border-radius:4px;
+      background:#2c2c2c; color:#f5f5f5;
+      margin-bottom:12px; font-size:0.9rem;
     }
-    textarea { resize: vertical; height: 80px; }
+    textarea { resize:vertical; height:80px; }
     .buttons {
-      text-align: right;
-      margin-top: 16px;
+      text-align:right; margin-top:16px;
     }
     .buttons button {
-      padding: 8px 12px;
-      margin-left: 8px;
-      border: none;
-      border-radius: 4px;
-      background: #3498db;
-      color: #fff;
-      cursor: pointer;
-      font-size: 0.9rem;
+      padding:8px 12px; margin-left:8px;
+      border:none; border-radius:4px;
+      background:#3498db; color:#fff;
+      cursor:pointer; font-size:0.9rem;
     }
     .info {
-      font-size: 0.85rem;
-      margin-bottom: 12px;
-      color: #bbb;
+      font-size:0.85rem; margin-bottom:12px;
+      color:#bbb;
     }
   </style>
 </head>
@@ -67,14 +46,13 @@
     <h1>Ticket for <span id="title"></span></h1>
     <div class="info" id="alert-info"></div>
 
-    <!-- Section to open a new ticket -->
     <div id="open-section">
       <h2>Open Ticket</h2>
       <label>Technician Name:
         <input type="text" id="techOpen" placeholder="e.g. John Doe"/>
       </label>
       <label>Work Description:
-        <textarea id="descOpen" placeholder="Describe work being done…"></textarea>
+        <textarea id="descOpen" placeholder="Describe work…"></textarea>
       </label>
       <div class="buttons">
         <button onclick="goBack()">Cancel</button>
@@ -82,7 +60,6 @@
       </div>
     </div>
 
-    <!-- Section to view and close an existing ticket -->
     <div id="view-section" style="display:none;">
       <h2>Ticket Details</h2>
       <div class="info">
@@ -91,7 +68,6 @@
       </div>
       <p id="showDescOpen"></p>
 
-      <!-- Closing form -->
       <div id="close-section">
         <h3>Close Ticket</h3>
         <label>Technician Name:
@@ -106,7 +82,6 @@
         </div>
       </div>
 
-      <!-- Once closed, show this -->
       <div id="closed-info" style="display:none;">
         <h3>Ticket Closed</h3>
         <div class="info">
@@ -122,27 +97,25 @@
   </div>
 
   <script>
-    // Read URL params
+    // URL params
     const params    = new URLSearchParams(location.search);
     const supplier  = params.get('supplier');
     const alertTime = params.get('alertTime');
 
-    // Set header text
     document.getElementById('title').textContent      = `${supplier} @ ${alertTime}`;
     document.getElementById('alert-info').textContent = `Alert triggered at ${alertTime}`;
 
-    // LocalStorage helpers
+    // tickets in localStorage
     function loadTickets(){
       return JSON.parse(localStorage.getItem('tickets') || '[]');
     }
-    function saveTickets(t){
-      localStorage.setItem('tickets', JSON.stringify(t));
+    function saveTickets(arr){
+      localStorage.setItem('tickets', JSON.stringify(arr));
     }
 
-    // Load existing tickets and find this one
     let tickets = loadTickets();
     let ticket  = tickets.find(t =>
-      t.supplier === supplier && t.alertTime === alertTime
+      t.supplier===supplier && t.alertTime===alertTime
     );
 
     function goBack(){
@@ -152,20 +125,14 @@
     function openTicket(){
       const tech = document.getElementById('techOpen').value.trim();
       const desc = document.getElementById('descOpen').value.trim();
-      if(!tech || !desc){
-        alert('Please fill technician name and description.');
-        return;
+      if(!tech||!desc){
+        alert('Please fill both fields'); return;
       }
       const now = new Date().toLocaleString();
       ticket = {
-        supplier,
-        alertTime,
-        techOpen: tech,
-        descOpen: desc,
-        openTime: now,
-        techClose: null,
-        descClose: null,
-        closeTime: null
+        supplier, alertTime,
+        techOpen: tech, descOpen: desc, openTime: now,
+        techClose: null, descClose: null, closeTime: null
       };
       tickets.push(ticket);
       saveTickets(tickets);
@@ -175,9 +142,8 @@
     function closeTicket(){
       const tech = document.getElementById('techClose').value.trim();
       const desc = document.getElementById('descClose').value.trim();
-      if(!tech || !desc){
-        alert('Please fill technician name and closing notes.');
-        return;
+      if(!tech||!desc){
+        alert('Please fill both fields'); return;
       }
       const now = new Date().toLocaleString();
       ticket.techClose = tech;
@@ -188,26 +154,23 @@
     }
 
     function renderView(){
-      // Hide open section, show view section
       document.getElementById('open-section').style.display = 'none';
       document.getElementById('view-section').style.display = 'block';
 
-      // Populate open details
       document.getElementById('showTechOpen').textContent = ticket.techOpen;
       document.getElementById('showOpenTime').textContent = ticket.openTime;
       document.getElementById('showDescOpen').textContent = ticket.descOpen;
 
-      // If already closed, hide close form and show closed info
       if(ticket.closeTime){
-        document.getElementById('close-section').style.display = 'none';
-        document.getElementById('closed-info').style.display  = 'block';
-        document.getElementById('showTechClose').textContent = ticket.techClose;
-        document.getElementById('showCloseTime').textContent = ticket.closeTime;
-        document.getElementById('showDescClose').textContent = ticket.descClose;
+        document.getElementById('close-section').style.display  = 'none';
+        document.getElementById('closed-info').style.display   = 'block';
+        document.getElementById('showTechClose').textContent   = ticket.techClose;
+        document.getElementById('showCloseTime').textContent   = ticket.closeTime;
+        document.getElementById('showDescClose').textContent   = ticket.descClose;
       }
     }
 
-    // Initialize: if a ticket exists, jump straight to view
+    // init
     if(ticket){
       renderView();
     }
