@@ -22,41 +22,42 @@
   <style>
     body, html { margin:0; padding:0; height:100%; }
     #map { width:100%; height:100%; }
+    /* Route controls on the right side */ 
     #route-controls {
-      position: absolute; top: 10px; left: 10px;
+      position: absolute; top: 10px; right: 10px;
       background: rgba(34,34,34,0.9); padding:12px;
       border-radius:6px; color:#f5f5f5;
       font-size:0.9rem; z-index:1000;
+      width: 200px; /* fixed width */
     }
     #route-controls input[type="number"],
     #route-controls input[type="text"] {
-      width:100px; margin-left:6px; padding:4px;
-      border:none; border-radius:4px;
+      width:100%; margin:4px 0;
+      padding:4px; border:none; border-radius:4px;
       background:#2c2c2c; color:#f5f5f5;
     }
     #route-controls button {
-      margin-left:6px; padding:4px 8px;
-      border:none; border-radius:4px;
-      background:#3498db; color:#fff;
-      cursor:pointer;
+      width:100%; margin:4px 0;
+      padding:6px; border:none; border-radius:4px;
+      background:#3498db; color:#fff; cursor:pointer;
     }
     #route-summary { margin-top:8px; }
+    .farm-tooltip { background: #fff !important; color: #000 !important; }
   </style>
 </head>
 <body>
+  <!-- Route Controls Panel -->
   <div id="route-controls">
     <div>
-      <label>Tanker Capacity (L):
-        <input type="number" id="tankerCapacity" value="30000"/>
-      </label>
+      <label>Tanker Capacity (L):</label>
+      <input type="number" id="tankerCapacity" value="30000"/>
     </div>
-    <div style="margin-top:8px;">
-      <label>Start Location:
-        <input type="text" id="startAddress" placeholder="Enter address"/>
-      </label>
+    <div>
+      <label>Start Location:</label>
+      <input type="text" id="startAddress" placeholder="Enter address"/>
       <button id="geocodeBtn">Locate</button>
     </div>
-    <div style="margin-top:8px;">
+    <div>
       <button id="planRouteBtn">Plan Route</button>
     </div>
     <hr style="border-color:#444; margin:8px 0;"/>
@@ -74,102 +75,91 @@
   <script>
     // 1. Initialize map
     const map = L.map('map').setView([-42, 173], 6);
-
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:'© OpenStreetMap'
     }).addTo(map);
 
-    // 2. Load farms (with coords from localStorage)
+    // 2. Load farms (with coords) and place markers & click-to-start
     const farms = JSON.parse(localStorage.getItem('farms') || '[]')
       .map(f => ({
         supplier: f.supplier,
         vats: f.vats,
-        coords: f.coords  // must have been saved by index.html
+        coords: f.coords   // ensured by index.html
       }));
 
-    // 3. Place markers with permanent labels
     farms.forEach(f => {
-      const tooltip = `
+      const marker = L.marker([f.coords.lat, f.coords.lng]).addTo(map);
+      const tooltipHtml = `
         <strong>#${f.supplier}</strong><br>
         ${f.vats.map((v,i)=>`Vat ${i+1}: ${v.toLocaleString()} L`).join('<br>')}
       `;
-      L.marker([f.coords.lat, f.coords.lng])
-        .addTo(map)
-        .bindTooltip(tooltip, { permanent:true, direction:'right', className:'farm-tooltip' });
+      marker.bindTooltip(tooltipHtml, {
+        permanent:true, direction:'right', className:'farm-tooltip'
+      });
+      // clicking a marker sets it as the start location :contentReference[oaicite:3]{index=3}
+      marker.on('click', () => {
+        startCoords = marker.getLatLng();
+        document.getElementById('summaryText').innerText = 
+          `Start set to Farm ${f.supplier}`;
+      });
     });
 
-    // 4. Geocoder setup
+    // 3. Geocoder setup (Nominatim) :contentReference[oaicite:4]{index=4}
     let startCoords = null;
-    const geocoder = L.Control.geocoder({ defaultMarkGeocode: false })
-      .addTo(map)
-      .on('markgeocode', e => {
-        startCoords = e.geocode.center;
-        map.setView(startCoords, 10);
-        L.marker(startCoords).addTo(map).bindPopup("Start").openPopup();
-      });
-
+    const geocoder = L.Control.geocoder({ defaultMarkGeocode: false }).addTo(map);
     document.getElementById('geocodeBtn').onclick = () => {
       const addr = document.getElementById('startAddress').value;
       if (!addr) return alert("Enter an address");
       geocoder.options.geocoder.geocode(addr, results => {
         if (results.length === 0) return alert("Address not found");
-        geocoder.fire("markgeocode", { geocode: results[0] });
+        startCoords = results[0].center;
+        map.setView(startCoords, 10);
+        L.marker(startCoords).addTo(map)
+          .bindPopup("Start Location").openPopup();
       });
     };
 
-    // 5. Nearest-Neighbor selection
+    // 4. Nearest-Neighbor farm selection :contentReference[oaicite:5]{index=5}
     function selectFarms(capacity, farmList) {
       let remaining = capacity;
       let current = startCoords;
-      const selected = [];
-      const avail = farmList.slice();
-
+      const sequence = [];
+      const pool = farmList.slice();
       while (true) {
-        // compute distances
-        avail.forEach(f => {
-          f.dist = current
-            ? current.distanceTo(L.latLng(f.coords))
-            : 0;
+        pool.forEach(f => {
+          f.dist = current ? current.distanceTo(f.coords) : 0;
         });
-        // sort & pick nearest that fits
-        avail.sort((a,b)=>a.dist-b.dist);
-        const next = avail.find(f => {
-          const vol = f.vats.reduce((a,b)=>a+b, 0);
+        pool.sort((a,b) => a.dist - b.dist);
+        const next = pool.find(f => {
+          const vol = f.vats.reduce((sum,x)=>sum+x,0);
           return vol <= remaining;
         });
         if (!next) break;
-        selected.push(next);
-        remaining -= next.vats.reduce((a,b)=>a+b,0);
+        sequence.push(next);
+        remaining -= next.vats.reduce((sum,x)=>sum+x,0);
         current = L.latLng(next.coords);
-        avail.splice(avail.indexOf(next),1);
+        pool.splice(pool.indexOf(next),1);
       }
-      const totalVol = capacity - remaining;
-      return {route: selected, totalVol, remaining};
+      const collected = capacity - remaining;
+      return { sequence, collected, remaining };
     }
 
-    // 6. Plan Route Handler
+    // 5. Plan Route Handler (Routing Machine) :contentReference[oaicite:6]{index=6}
     document.getElementById('planRouteBtn').onclick = () => {
-      const cap = Number(document.getElementById('tankerCapacity').value);
-      if (!startCoords) return alert("Locate start first");
-      const {route, totalVol, remaining} = selectFarms(cap, farms);
+      const capacity = Number(document.getElementById('tankerCapacity').value);
+      if (!startCoords) return alert("Set a start location first");
+      const { sequence, collected, remaining } = selectFarms(capacity, farms);
       document.getElementById('summaryText').innerText =
-        `Stops: ${route.length}, Collected: ${totalVol.toLocaleString()} L, Remaining: ${remaining.toLocaleString()} L`;
+        `Stops: ${sequence.length}, Collected: ${collected.toLocaleString()} L, Remaining: ${remaining.toLocaleString()} L`;
 
-      // waypoints: start → farms → start
       const waypoints = [
         L.latLng(startCoords),
-        ...route.map(f=>L.latLng(f.coords)),
+        ...sequence.map(f => L.latLng(f.coords)),
         L.latLng(startCoords)
       ];
-
-      // clear existing
       if (window.routeControl) map.removeControl(window.routeControl);
-
-      // add routing control
       window.routeControl = L.Routing.control({
-        waypoints,
-        showAlternatives: false,
-        routeWhileDragging: false
+        waypoints, showAlternatives:false, routeWhileDragging:false
       }).addTo(map);
     };
   </script>
