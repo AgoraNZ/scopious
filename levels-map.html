@@ -7,6 +7,8 @@
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    integrity="sha256-sA+993GmH7IjY9yE90AwvMJhW+xQ+5F5Y4u9gI6siCk="
+    crossorigin=""
   />
   <style>
     body, html { margin:0; padding:0; height:100%; }
@@ -16,35 +18,36 @@
 <body>
   <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script
+    src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+    integrity="sha256-DxmMT3zv1IH8mXoxL4W4xLP4xhcGNIvtG6an0wV+gWY="
+    crossorigin=""
+  ></script>
   <script>
-    // load farms + vats
+    // Load farms + vats
     const farms = JSON.parse(localStorage.getItem('farms')||'[]');
 
-    // initialize map centered over NZ
+    // Init map
     const map = L.map('map').setView([-42, 173], 6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:'© OpenStreetMap'
     }).addTo(map);
 
     farms.forEach(f => {
-      // assign random coords in West Coast or Waikato bounding boxes
+      // random coords West Coast or Waikato
       let lat, lng;
-      if(Math.random()<0.5) {
-        // West Coast: lat -43 to -41, lng 170 to 173
-        lat = -43 + Math.random()*2;
-        lng = 170 + Math.random()*3;
+      if(Math.random()<0.5){
+        lat = -43 + 2*Math.random();    // -43 to -41
+        lng = 170 + 3*Math.random();    // 170 to 173
       } else {
-        // Waikato: lat -38 to -37, lng 175 to 176
-        lat = -38 + Math.random()*1;
-        lng = 175 + Math.random()*1;
+        lat = -38 + Math.random();      // -38 to -37
+        lng = 175 + Math.random();      // 175 to 176
       }
-      const popupHtml = `
+      const popup = `
         <strong>#${f.supplier}</strong><br>
         ${f.vats.map((v,i)=>`Vat ${i+1}: ${v.toLocaleString()} L`).join('<br>')}
       `;
-      L.marker([lat,lng]).addTo(map)
-        .bindPopup(popupHtml);
+      L.marker([lat, lng]).addTo(map).bindPopup(popup);
     });
   </script>
 </body>
