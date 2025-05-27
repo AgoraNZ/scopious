@@ -3,51 +3,175 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Vat Levels Map</title>
+  <title>Vat Levels & Route Planner</title>
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
     crossorigin=""
   />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+    crossorigin=""
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"
+    crossorigin=""
+  />
   <style>
     body, html { margin:0; padding:0; height:100%; }
     #map { width:100%; height:100%; }
+    #route-controls {
+      position: absolute; top: 10px; left: 10px;
+      background: rgba(34,34,34,0.9); padding:12px;
+      border-radius:6px; color:#f5f5f5;
+      font-size:0.9rem; z-index:1000;
+    }
+    #route-controls input[type="number"],
+    #route-controls input[type="text"] {
+      width:100px; margin-left:6px; padding:4px;
+      border:none; border-radius:4px;
+      background:#2c2c2c; color:#f5f5f5;
+    }
+    #route-controls button {
+      margin-left:6px; padding:4px 8px;
+      border:none; border-radius:4px;
+      background:#3498db; color:#fff;
+      cursor:pointer;
+    }
+    #route-summary { margin-top:8px; }
   </style>
 </head>
 <body>
+  <div id="route-controls">
+    <div>
+      <label>Tanker Capacity (L):
+        <input type="number" id="tankerCapacity" value="30000"/>
+      </label>
+    </div>
+    <div style="margin-top:8px;">
+      <label>Start Location:
+        <input type="text" id="startAddress" placeholder="Enter address"/>
+      </label>
+      <button id="geocodeBtn">Locate</button>
+    </div>
+    <div style="margin-top:8px;">
+      <button id="planRouteBtn">Plan Route</button>
+    </div>
+    <hr style="border-color:#444; margin:8px 0;"/>
+    <div id="route-summary">
+      <strong>Summary:</strong>
+      <div id="summaryText">—</div>
+    </div>
+  </div>
+
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js" crossorigin=""></script>
   <script>
-    // Load farms + vats
-    const farms = JSON.parse(localStorage.getItem('farms')||'[]');
-
-    // Tumeke map
+    // 1. Initialize map
     const map = L.map('map').setView([-42, 173], 6);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:'© OpenStreetMap'
     }).addTo(map);
 
-    // Pre‐defined farmland centroids
-    const coords = [
-      {lat:-41.75806, lng:171.60222}, // Westport :contentReference[oaicite:0]{index=0}
-      {lat:-42.4503,  lng:171.2079 }, // Greymouth :contentReference[oaicite:1]{index=1}
-      {lat:-42.71556, lng:170.96806}, // Hokitika :contentReference[oaicite:2]{index=2}
-      {lat:-37.8833,  lng:175.4667 }, // Cambridge :contentReference[oaicite:3]{index=3}
-      {lat:-37.7833,  lng:175.2833 }, // Hamilton :contentReference[oaicite:4]{index=4}
-      {lat:-38.017,   lng:175.317  }  // Te Awamutu :contentReference[oaicite:5]{index=5}
-    ];
+    // 2. Load farms (with coords from localStorage)
+    const farms = JSON.parse(localStorage.getItem('farms') || '[]')
+      .map(f => ({
+        supplier: f.supplier,
+        vats: f.vats,
+        coords: f.coords  // must have been saved by index.html
+      }));
 
-    farms.forEach((f,i) => {
-      // pick one of the coords (wrap if farms > coords)
-      const loc = coords[i % coords.length];
-      const popupText = `<strong>#${f.supplier}</strong><br>` +
-        f.vats.map((v,j)=>`Vat ${j+1}: ${v.toLocaleString()} L`).join('<br>');
-
-      L.marker([loc.lat, loc.lng])
+    // 3. Place markers with permanent labels
+    farms.forEach(f => {
+      const tooltip = `
+        <strong>#${f.supplier}</strong><br>
+        ${f.vats.map((v,i)=>`Vat ${i+1}: ${v.toLocaleString()} L`).join('<br>')}
+      `;
+      L.marker([f.coords.lat, f.coords.lng])
         .addTo(map)
-        .bindTooltip(popupText, {permanent:true, direction:'right'});
+        .bindTooltip(tooltip, { permanent:true, direction:'right', className:'farm-tooltip' });
     });
+
+    // 4. Geocoder setup
+    let startCoords = null;
+    const geocoder = L.Control.geocoder({ defaultMarkGeocode: false })
+      .addTo(map)
+      .on('markgeocode', e => {
+        startCoords = e.geocode.center;
+        map.setView(startCoords, 10);
+        L.marker(startCoords).addTo(map).bindPopup("Start").openPopup();
+      });
+
+    document.getElementById('geocodeBtn').onclick = () => {
+      const addr = document.getElementById('startAddress').value;
+      if (!addr) return alert("Enter an address");
+      geocoder.options.geocoder.geocode(addr, results => {
+        if (results.length === 0) return alert("Address not found");
+        geocoder.fire("markgeocode", { geocode: results[0] });
+      });
+    };
+
+    // 5. Nearest-Neighbor selection
+    function selectFarms(capacity, farmList) {
+      let remaining = capacity;
+      let current = startCoords;
+      const selected = [];
+      const avail = farmList.slice();
+
+      while (true) {
+        // compute distances
+        avail.forEach(f => {
+          f.dist = current
+            ? current.distanceTo(L.latLng(f.coords))
+            : 0;
+        });
+        // sort & pick nearest that fits
+        avail.sort((a,b)=>a.dist-b.dist);
+        const next = avail.find(f => {
+          const vol = f.vats.reduce((a,b)=>a+b, 0);
+          return vol <= remaining;
+        });
+        if (!next) break;
+        selected.push(next);
+        remaining -= next.vats.reduce((a,b)=>a+b,0);
+        current = L.latLng(next.coords);
+        avail.splice(avail.indexOf(next),1);
+      }
+      const totalVol = capacity - remaining;
+      return {route: selected, totalVol, remaining};
+    }
+
+    // 6. Plan Route Handler
+    document.getElementById('planRouteBtn').onclick = () => {
+      const cap = Number(document.getElementById('tankerCapacity').value);
+      if (!startCoords) return alert("Locate start first");
+      const {route, totalVol, remaining} = selectFarms(cap, farms);
+      document.getElementById('summaryText').innerText =
+        `Stops: ${route.length}, Collected: ${totalVol.toLocaleString()} L, Remaining: ${remaining.toLocaleString()} L`;
+
+      // waypoints: start → farms → start
+      const waypoints = [
+        L.latLng(startCoords),
+        ...route.map(f=>L.latLng(f.coords)),
+        L.latLng(startCoords)
+      ];
+
+      // clear existing
+      if (window.routeControl) map.removeControl(window.routeControl);
+
+      // add routing control
+      window.routeControl = L.Routing.control({
+        waypoints,
+        showAlternatives: false,
+        routeWhileDragging: false
+      }).addTo(map);
+    };
   </script>
 </body>
 </html>
