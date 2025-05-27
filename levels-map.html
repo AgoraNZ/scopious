@@ -7,7 +7,6 @@
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-    integrity="sha256-sA+993GmH7IjY9yE90AwvMJhW+xQ+5F5Y4u9gI6siCk="
     crossorigin=""
   />
   <style>
@@ -18,36 +17,36 @@
 <body>
   <div id="map"></div>
 
-  <script
-    src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
-    integrity="sha256-DxmMT3zv1IH8mXoxL4W4xLP4xhcGNIvtG6an0wV+gWY="
-    crossorigin=""
-  ></script>
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" crossorigin=""></script>
   <script>
     // Load farms + vats
     const farms = JSON.parse(localStorage.getItem('farms')||'[]');
 
-    // Init map
+    // Tumeke map
     const map = L.map('map').setView([-42, 173], 6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:'© OpenStreetMap'
     }).addTo(map);
 
-    farms.forEach(f => {
-      // random coords West Coast or Waikato
-      let lat, lng;
-      if(Math.random()<0.5){
-        lat = -43 + 2*Math.random();    // -43 to -41
-        lng = 170 + 3*Math.random();    // 170 to 173
-      } else {
-        lat = -38 + Math.random();      // -38 to -37
-        lng = 175 + Math.random();      // 175 to 176
-      }
-      const popup = `
-        <strong>#${f.supplier}</strong><br>
-        ${f.vats.map((v,i)=>`Vat ${i+1}: ${v.toLocaleString()} L`).join('<br>')}
-      `;
-      L.marker([lat, lng]).addTo(map).bindPopup(popup);
+    // Pre‐defined farmland centroids
+    const coords = [
+      {lat:-41.75806, lng:171.60222}, // Westport :contentReference[oaicite:0]{index=0}
+      {lat:-42.4503,  lng:171.2079 }, // Greymouth :contentReference[oaicite:1]{index=1}
+      {lat:-42.71556, lng:170.96806}, // Hokitika :contentReference[oaicite:2]{index=2}
+      {lat:-37.8833,  lng:175.4667 }, // Cambridge :contentReference[oaicite:3]{index=3}
+      {lat:-37.7833,  lng:175.2833 }, // Hamilton :contentReference[oaicite:4]{index=4}
+      {lat:-38.017,   lng:175.317  }  // Te Awamutu :contentReference[oaicite:5]{index=5}
+    ];
+
+    farms.forEach((f,i) => {
+      // pick one of the coords (wrap if farms > coords)
+      const loc = coords[i % coords.length];
+      const popupText = `<strong>#${f.supplier}</strong><br>` +
+        f.vats.map((v,j)=>`Vat ${j+1}: ${v.toLocaleString()} L`).join('<br>');
+
+      L.marker([loc.lat, loc.lng])
+        .addTo(map)
+        .bindTooltip(popupText, {permanent:true, direction:'right'});
     });
   </script>
 </body>
