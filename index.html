@@ -6,92 +6,114 @@
   <title>Dairy Farm Alerts Overview</title>
   <style>
     :root {
-      --bg: #1e1e1e;
-      --panel-bg: #222;
-      --border: #444;
-      --text: #f5f5f5;
-      --ok: #2ecc71;
-      --warning: #f39c12;
-      --info: #3498db;
-      --critical: #e74c3c;
+      --bg: #1e1e1e; --panel-bg: #222; --border: #444; --text: #f5f5f5;
+      --ok: #2ecc71; --warning: #f39c12; --info: #3498db; --critical: #e74c3c;
     }
     *,*::before,*::after{box-sizing:border-box;}
     body{margin:0;font-family:sans-serif;background:var(--bg);color:var(--text)}
     .container{max-width:960px;margin:20px auto;padding:0 16px}
     h1{margin-bottom:16px}
-    .map-btn{position:fixed;top:20px;right:20px;background:#3498db;color:#fff;
-      border:none;padding:8px 12px;border-radius:4px;cursor:pointer;z-index:1000}
+
+    /* Map View Button */
+    .map-btn{position:fixed;top:20px;right:20px;
+      background:#3498db;color:#fff;border:none;
+      padding:8px 12px;border-radius:4px;cursor:pointer;z-index:1000}
+
+    /* Summary Panel */
     .summary{background:var(--panel-bg);border:1px solid var(--border);
       border-radius:6px;padding:12px;margin-bottom:20px}
     .summary-row{display:flex;justify-content:space-between;font-size:0.9rem}
     .summary-row div{flex:1;text-align:center}
+
+    /* Add Farm Form */
     .add-farm-btn{margin-bottom:12px;text-align:right}
     .add-farm-btn button{padding:8px 12px;background:#3498db;border:none;
       color:#fff;border-radius:4px;cursor:pointer}
-    #addFarmForm{display:none;background:var(--panel-bg);border:1px solid var(--border);
-      border-radius:6px;padding:12px;margin-bottom:16px}
+    #addFarmForm{display:none;background:var(--panel-bg);
+      border:1px solid var(--border);border-radius:6px;
+      padding:12px;margin-bottom:16px}
     #addFarmForm label{display:block;margin-bottom:8px;font-size:0.9rem}
-    #addFarmForm input[type="text"]{width:100%;padding:6px;border:1px solid #555;
-      border-radius:4px;background:#333;color:var(--text)}
-    .alarms-list{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:12px 0}
+    #addFarmForm input[type="text"]{width:100%;padding:6px;
+      border:1px solid #555;border-radius:4px;
+      background:#333;color:var(--text)}
+    .alarms-list{display:grid;grid-template-columns:1fr 1fr;
+      gap:4px;margin:12px 0}
     .alarms-list label{display:flex;align-items:center;font-size:0.9rem}
     .alarms-list input{margin-right:6px}
     #addFarmForm .buttons{text-align:right;margin-top:8px}
-    #addFarmForm .buttons button{padding:6px 10px;border:none;border-radius:4px;
-      background:#3498db;color:#fff;cursor:pointer;margin-left:8px}
+    #addFarmForm .buttons button{padding:6px 10px;
+      border:none;border-radius:4px;background:#3498db;
+      color:#fff;cursor:pointer;margin-left:8px}
+
+    /* Search */
     .search{margin-bottom:16px}
-    .search input{width:100%;padding:8px 12px;border:none;border-radius:4px;
-      background:#2c2c2c;color:var(--text);font-size:0.95rem}
+    .search input{width:100%;padding:8px 12px;border:none;
+      border-radius:4px;background:#2c2c2c;color:var(--text);
+      font-size:0.95rem}
+
+    /* Card Grid */
+    .cards{display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+      gap:16px} /* CSS Grid for cards :contentReference[oaicite:9]{index=9} :contentReference[oaicite:10]{index=10} */
+    .card{background:var(--panel-bg);border:1px solid var(--border);
+      border-radius:6px;display:flex;flex-direction:column;
+      padding:16px}
+    .card-header{margin-bottom:8px}
+    .supplier{font-weight:bold;color:var(--text);
+      text-decoration:none;font-size:1rem}
     .vat-info{font-size:0.85rem;color:#ccc;text-align:right;margin-bottom:8px}
     .vat-info div{margin:2px 0}
-    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-    .card{background:var(--panel-bg);border:1px solid var(--border);
-      border-radius:6px;display:flex;flex-direction:column;padding:16px}
-    .card-header{margin-bottom:8px}
-    .card-header .supplier{font-weight:bold;color:var(--text);
-      text-decoration:none;font-size:1rem}
+
     .card-body{flex:1;margin-bottom:12px}
     .card-body a{text-decoration:none;color:inherit}
-    .status{display:inline-flex;align-items:center;font-size:0.9rem;
-      padding:4px 8px;border-radius:4px;color:#fff;margin-bottom:8px}
-    .status-ok{background:var(--ok)}
-    .status-warning{background:var(--warning)}
-    .status-info{background:var(--info)}
-    .status-critical{background:var(--critical)}
-    .status .dot{width:10px;height:10px;border-radius:50%;
+    .status{display:inline-flex;align-items:center;
+      font-size:0.9rem;padding:4px 8px;border-radius:4px;
+      color:#fff;margin-bottom:8px}
+    .status-ok{background:var(--ok)} .status-warning{background:var(--warning)}
+    .status-info{background:var(--info)} .status-critical{background:var(--critical)}
+    .dot{width:10px;height:10px;border-radius:50%;
       background:currentColor;margin-right:6px}
     .alarm-name,.time{font-size:0.85rem;color:#ccc;margin-bottom:4px}
+
     .card-actions{display:flex;gap:8px}
-    .card-actions button{flex:1;padding:6px 8px;font-size:0.9rem;
-      border:none;border-radius:4px;cursor:pointer}
+    .card-actions button{flex:1;padding:6px 8px;
+      font-size:0.9rem;border:none;border-radius:4px;cursor:pointer}
     .btn-ticket{background:var(--critical);color:#fff}
     .btn-edit{background:#3498db;color:#fff}
+
     .permissions{margin:24px 0;text-align:center;font-size:0.9rem}
     .permissions label{margin:0 12px;cursor:pointer}
     .permissions input{margin-right:4px}
+
     .footer-btn{text-align:center;margin-bottom:24px}
     .footer-btn button{padding:10px 20px;font-size:1rem;
-      background:#3498db;color:#fff;border:none;border-radius:4px;cursor:pointer}
+      background:#3498db;color:#fff;border:none;border-radius:4px;
+      cursor:pointer}
   </style>
 </head>
 <body>
-  <button class="map-btn" onclick="location.href='levels-map.html'">📍 Map View</button>
+  <button class="map-btn" onclick="location.href='levels-map.html'">
+    📍 Map View
+  </button>
+
   <div class="container">
     <h1>Dairy Farm Alerts Overview</h1>
 
-    <!-- Summary -->
+    <!-- Summary Panel -->
     <div class="summary">
       <div class="summary-row">
-        <div>All Farms</div><div>Status:</div><div>Gateways:</div>
-        <div>Devices:</div><div>Active:</div><div>Inactive:</div>
+        <div>All Farms</div><div>Status:</div>
+        <div>Gateways:</div><div>Devices:</div>
+        <div>Active:</div><div>Inactive:</div>
       </div>
       <div class="summary-row">
-        <div>OFI</div><div>Active</div><div>105</div>
-        <div>534</div><div>534</div><div>0</div>
+        <div>OFI</div><div>Active</div>
+        <div>105</div><div>534</div>
+        <div>534</div><div>0</div>
       </div>
     </div>
 
-    <!-- Add Farm -->
+    <!-- Add Farm Form -->
     <div class="add-farm-btn">
       <button id="showAddForm">+ Add Farm</button>
     </div>
@@ -111,7 +133,7 @@
       <input id="search" placeholder="🔍 Filter by supplier number…"/>
     </div>
 
-    <!-- Cards -->
+    <!-- Cards Container -->
     <div class="cards" id="card-container"></div>
 
     <!-- Permissions -->
@@ -121,7 +143,7 @@
       <label><input type="radio" name="role" value="processor"> Processor</label>
     </div>
 
-    <!-- Create Rule -->
+    <!-- Create Rule Button -->
     <div class="footer-btn">
       <button onclick="location.href='rules.html'">Create Alarm / Rule</button>
     </div>
@@ -136,65 +158,55 @@
 
     // 1) Seed exactly one Critical and one Warning
     const historyCfg = {
-      '12345': { criticalOn: '2025-05-29 09:00', warningOn: null },
-      '52440': { criticalOn: null, warningOn:  '2025-05-29 10:30' },
-      '44074': { criticalOn: null, warningOn: null },
-      '35421': { criticalOn: null, warningOn: null },
-      '98765': { criticalOn: null, warningOn: null },
-      '24680': { criticalOn: null, warningOn: null },
-      '13579': { criticalOn: null, warningOn: null },
-      '11223': { criticalOn: null, warningOn: null },
-      '99887': { criticalOn: null, warningOn: null },
-      '55678': { criticalOn: null, warningOn: null }
+      '12345': { criticalOn:'2025-05-29 09:00', warningOn:null },
+      '52440': { criticalOn:null, warningOn:'2025-05-29 10:30' },
+      '44074':{criticalOn:null,warningOn:null}, '35421':{criticalOn:null,warningOn:null},
+      '98765':{criticalOn:null,warningOn:null}, '24680':{criticalOn:null,warningOn:null},
+      '13579':{criticalOn:null,warningOn:null}, '11223':{criticalOn:null,warningOn:null},
+      '99887':{criticalOn:null,warningOn:null}, '55678':{criticalOn:null,warningOn:null}
     };
 
-    const LS_FARMS   = 'farms';
-    const LS_TICKETS = 'tickets';
-    let currentRole = 'admin';
+    const LS_FARMS='farms', LS_TICKETS='tickets';
+    let currentRole='admin';
 
-    // 2) Load farms, ensure vats
+    // 2) Load farms & ensure vats
     function loadFarms(){
-      let f = JSON.parse(localStorage.getItem(LS_FARMS)||'null');
+      let f=JSON.parse(localStorage.getItem(LS_FARMS)||'null');
       if(!f){
-        f = Object.keys(historyCfg).map(s=>({
-          supplier:s, name:'', activeAlarms:[...ALARMS]
-        }));
+        f=Object.keys(historyCfg).map(s=>({supplier:s,name:'',activeAlarms:[...ALARMS]}));
       }
       let changed=false;
       f.forEach(x=>{
         if(!Array.isArray(x.vats)){
-          x.vats=[Math.floor(2000+Math.random()*18000)];
+          x.vats=[Math.floor(2000+Math.random()*18000)]; // Random vat volumes
           if(Math.random()<0.1)x.vats.push(Math.floor(2000+Math.random()*18000));
           changed=true;
         }
       });
-      if(changed) localStorage.setItem(LS_FARMS, JSON.stringify(f));
+      if(changed) localStorage.setItem(LS_FARMS,JSON.stringify(f)); // Persist vats
       return f;
     }
     function saveFarms(a){localStorage.setItem(LS_FARMS,JSON.stringify(a));}
 
-    // 3) Ticket storage
-    function loadTickets(){ return JSON.parse(localStorage.getItem(LS_TICKETS)||'[]'); }
-    function saveTickets(a){ localStorage.setItem(LS_TICKETS, JSON.stringify(a)); }
-    let farmsList = loadFarms(), tickets = loadTickets();
+    // 3) Ticket storage in localStorage :contentReference[oaicite:11]{index=11} :contentReference[oaicite:12]{index=12}
+    function loadTickets(){return JSON.parse(localStorage.getItem(LS_TICKETS)||'[]');}
+    function saveTickets(a){localStorage.setItem(LS_TICKETS,JSON.stringify(a));}
 
-    // 4) Build overview rows
+    let farmsList=loadFarms(), tickets=loadTickets();
+
+    // 4) Build overview and severity sort :contentReference[oaicite:13]{index=13} :contentReference[oaicite:14]{index=14}
     function makeOverview(f){
-      const cfg=historyCfg[f.supplier]||{};
-      let status='Ok', alarm='', time='';
-      if(cfg.criticalOn){ status='Critical'; alarm='temperature fault'; time=cfg.criticalOn; }
-      else if(cfg.warningOn){ status='Warning'; alarm='Battery Low Alarm'; time=cfg.warningOn; }
-      return {...f, status, alarm, time};
+      const cfg=historyCfg[f.supplier]||{}, r={...f,status:'Ok',alarm:'',time:''};
+      if(cfg.criticalOn){r.status='Critical';r.alarm='temperature fault';r.time=cfg.criticalOn;}
+      else if(cfg.warningOn){r.status='Warning';r.alarm='Battery Low Alarm';r.time=cfg.warningOn;}
+      return r;
     }
-    let overviewData = farmsList.map(makeOverview)
-      .sort((a,b)=>{
-        const sev={'Critical':2,'Warning':1,'Info':0,'Ok':0};
-        return sev[b.status] - sev[a.status];
-      });
-    // Force Critical first, Warning second
-    const ci=overviewData.findIndex(r=>r.status==='Critical');
+    let overviewData=farmsList.map(makeOverview)
+      .sort((a,b)=>{const sev={'Critical':2,'Warning':1,'Info':0,'Ok':0};return sev[b.status]-sev[a.status];});
+    // Force Critical then Warning
+    const ci=overviewData.findIndex(x=>x.status==='Critical');
     if(ci>0) overviewData.unshift(overviewData.splice(ci,1)[0]);
-    const wi=overviewData.findIndex(r=>r.status==='Warning');
+    const wi=overviewData.findIndex(x=>x.status==='Warning');
     if(wi>1) overviewData.splice(1,0,overviewData.splice(wi,1)[0]);
 
     // 5) Render cards
@@ -202,20 +214,21 @@
       const c=document.getElementById('card-container'); c.innerHTML='';
       rows.forEach(r=>{
         // find existing ticket
-        const tk = tickets.find(t=>t.supplier===r.supplier && t.alertTime===r.time);
+        const tk=tickets.find(t=>t.supplier===r.supplier && t.alertTime===r.time);
         let ticketHTML='';
         if(r.status==='Critical' && currentRole!=='processor'){
           if(!tk){
-            ticketHTML = `<button class="btn-ticket" onclick="openTicket('${r.supplier}','${r.time}')">Open Ticket</button>`;
+            ticketHTML=`<button class="btn-ticket" onclick="openTicket('${r.supplier}','${r.time}')">Open Ticket</button>`;
           } else if(!tk.closeTime){
-            ticketHTML = `<button class="btn-ticket" onclick="closeTicket('${tk.id}')">Close Ticket</button>`;
+            ticketHTML=`<button class="btn-ticket" onclick="closeTicket('${tk.id}')">Close Ticket</button>`;
           } else {
-            ticketHTML = `<div>Closed: ${tk.closeTime}</div>`;
+            ticketHTML=`<div>Closed: ${tk.closeTime}</div>`;
           }
         } else if(r.status==='Critical'){
-          ticketHTML = tk ? (tk.closeTime?'Closed':'Open') : '';
+          ticketHTML=tk?(tk.closeTime?'Closed':'Open'):'';
         }
-        const vatsHtml = r.vats.map((v,i)=>`<div>Vat ${i+1}: ${v.toLocaleString()} L</div>`).join('');
+
+        const vatsHtml=r.vats.map((v,i)=>`<div>Vat ${i+1}: ${v.toLocaleString()} L</div>`).join('');
         const card=document.createElement('div'); card.className='card';
         card.innerHTML=`
           <div class="card-header">
@@ -240,21 +253,21 @@
     }
     renderCards(overviewData);
 
-    // 6) Ticket handlers
+    // 6) Ticket functions
     function openTicket(supplier, alertTime){
-      const id = supplier+'_'+alertTime;
-      tickets.push({ id, supplier, alertTime, openTime:new Date().toLocaleString() });
+      const id=supplier+'_'+alertTime, now=new Date().toLocaleString();
+      tickets.push({id,supplier,alertTime,openTime:now});
       saveTickets(tickets);
       renderCards(overviewData);
     }
     function closeTicket(id){
-      const t = tickets.find(x=>x.id===id);
-      t.closeTime = new Date().toLocaleString();
+      const t=tickets.find(x=>x.id===id);
+      t.closeTime=new Date().toLocaleString();
       saveTickets(tickets);
       renderCards(overviewData);
     }
 
-    // 7) Permissions & search
+    // 7) Permissions & search :contentReference[oaicite:15]{index=15} :contentReference[oaicite:16]{index=16}
     document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('change',e=>{
       currentRole=e.target.value; renderCards(overviewData);
     }));
@@ -263,12 +276,10 @@
       renderCards(overviewData.filter(r=>r.supplier.includes(q)));
     });
 
-    // 8) Add farm UI (unchanged)
+    // 8) Add farm form
     document.getElementById('showAddForm').onclick=()=>{
-      const div=document.getElementById('addFarmForm'),
-            list=document.getElementById('alarmsCheckboxes');
-      list.innerHTML='';
-      ALARMS.forEach(name=>{
+      const div=document.getElementById('addFarmForm'), list=document.getElementById('alarmsCheckboxes');
+      list.innerHTML=''; ALARMS.forEach(name=>{
         const id='chk_'+name.replace(/\s+/g,'');
         list.innerHTML+=`<label><input type="checkbox" id="${id}" value="${name}" checked/> ${name}</label>`;
       });
@@ -282,10 +293,7 @@
       const sel=[]; document.querySelectorAll('#alarmsCheckboxes input:checked').forEach(cb=>sel.push(cb.value));
       farmsList.push({supplier:sup,name:'',activeAlarms:sel,vats:[Math.floor(2000+Math.random()*18000)]});
       saveFarms(farmsList);
-      overviewData = farmsList.map(makeOverview).sort((a,b)=>{
-        const sev={'Critical':2,'Warning':1,'Info':0,'Ok':0};
-        return sev[b.status]-sev[a.status];
-      });
+      overviewData=farmsList.map(makeOverview).sort((a,b)=>{const sev={'Critical':2,'Warning':1,'Info':0,'Ok':0};return sev[b.status]-sev[a.status];});
       // re-force first two
       const ci2=overviewData.findIndex(x=>x.status==='Critical');
       if(ci2>0) overviewData.unshift(overviewData.splice(ci2,1)[0]);
