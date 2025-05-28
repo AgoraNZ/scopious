@@ -3,83 +3,130 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Debug Map</title>
+  <title>Vat Levels & Route Planner</title>
+
+  <!-- Leaflet core CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
     crossorigin=""
   />
+  <!-- Routing Machine CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"
+    crossorigin=""
+  />
   <style>
-    html, body { margin:0; padding:0; height:100% }
+    body, html { margin:0; padding:0; height:100% }
     #map { width:100%; height:100% }
-    .factory-icon { width:32px; height:32px; background-size:cover; }
+    /* Control panel */
+    #route-controls {
+      position:absolute; top:10px; right:10px;
+      background:rgba(34,34,34,0.9);
+      padding:12px; border-radius:6px;
+      color:#f5f5f5; width:260px;
+      font-size:0.9rem; z-index:1000;
+    }
+    #route-controls label { display:block; margin-top:8px }
+    #route-controls select,input,button {
+      width:100%; padding:6px; margin-top:4px;
+      border:none; border-radius:4px;
+      background:#2c2c2c; color:#f5f5f5;
+    }
+    #route-controls button { cursor:pointer; background:#3498db; }
+    #route-summary { margin-top:12px; background:#1b1b1b; padding:8px; border-radius:4px; max-height:200px; overflow:auto; }
+    .farm-tooltip { background:#fff!important; color:#000!important; font-size:0.8rem; }
+    .factory-icon { width:32px; height:32px; border-radius:4px; background-size:cover; border:2px solid #fff }
   </style>
 </head>
 <body>
+  <div id="route-controls">
+    <label>Factory Start:</label>
+    <select id="factorySelect">
+      <option value="">Select Factory…</option>
+      <option value="westland">Westland Milk Products (Hokitika)</option>
+      <option value="ofi">OFI Milk Factory (Tokoroa)</option>
+    </select>
+
+    <label>Tanker Capacity (L):</label>
+    <input type="number" id="tankerCapacity" value="30000"/>
+
+    <label>Trailer Capacity (L):</label>
+    <input type="number" id="trailerCapacity" value="20000"/>
+
+    <button id="planRouteBtn">Plan Route</button>
+
+    <div id="route-summary">
+      <strong>Summary:</strong>
+      <div id="summaryText">—</div>
+      <div id="etaText"></div>
+    </div>
+  </div>
+
   <div id="map"></div>
 
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" crossorigin=""></script>
-  <script>
-    // 1) Set up map
-    const map = L.map('map').setView([-42, 173], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:'© OpenStreetMap'
-    }).addTo(map);
+  <!-- Routing Machine -->
+  <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js" crossorigin=""></script>
+  <!-- MovingMarker plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-moving-marker@2.0.0/MovingMarker.min.js" crossorigin=""></script>
 
-    // 2) Define factories
+  <script>
+    // Factory definitions with verified coordinates
     const factories = {
       westland: {
         name: 'Westland Milk Products',
-        coords: [-42.7208, 170.9795],
+        coords: L.latLng(-42.7167, 170.9667), // :contentReference[oaicite:12]{index=12}
         iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/4a/Westland_Milk_Products_dairy_processing_plant.jpg'
       },
       ofi: {
-        name: 'OFI Tokoroa',
-        coords: [-38.1667, 175.8667],
+        name: 'OFI Milk Factory',
+        coords: L.latLng(-38.2333, 175.8667), // :contentReference[oaicite:13]{index=13}
         iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/OFI_Milking_factory_tokoroa.jpg/320px-OFI_Milking_factory_tokoroa.jpg'
       }
     };
 
-    let farmMarkers = L.layerGroup().addTo(map);
-
-    // 3) Utility to generate random farms within 100km of a point
-    function randomFarms(center, count=50) {
-      const farms = [];
-      for (let i=0; i<count; i++) {
-        // generate a random bearing & distance up to 100km
-        const angle = Math.random()*2*Math.PI;
-        const dist = Math.random()*100000; // meters
-        // offset lat/lng by roughly dist/111000 deg and cos(lat)
-        const dLat = (dist*Math.cos(angle)) / 111000;
-        const dLng = (dist*Math.sin(angle)) / (111000*Math.cos(center[0]*Math.PI/180));
-        farms.push([ center[0]+dLat, center[1]+dLng ]);
-      }
-      return farms;
+    // Prepare NZ-wide random sample (will filter by distance)
+    const allSamples = [];
+    for (let i = 0; i < 500; i++) {
+      const lat = -47 + Math.random() * 13;   // NZ lat range
+      const lng = 166 + Math.random() * 13;  // NZ lng range
+      allSamples.push({ coords: L.latLng(lat, lng), vats: [Math.floor(2000 + Math.random()*18000)] });
     }
 
-    // 4) Place factory markers and attach click handlers
-    Object.entries(factories).forEach(([key, f])=>{
-      const icon = L.divIcon({
+    // Initialize map (Quick Start Guide) :contentReference[oaicite:14]{index=14}
+    const map = L.map('map').setView([-42, 173], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let farmLayer = L.layerGroup().addTo(map),
+        routeControl, movingMarker, startCoords;
+
+    // On factory selection: plot factory icon + farms within 100 km
+    document.getElementById('factorySelect').addEventListener('change', e => {
+      const key = e.target.value;
+      farmLayer.clearLayers();
+      if (routeControl) map.removeControl(routeControl);
+      if (movingMarker) map.removeLayer(movingMarker);
+      document.getElementById('summaryText').innerText = '—';
+      document.getElementById('etaText').innerText = '';
+      if (!key) return;
+
+      const f = factories[key];
+      startCoords = f.coords;
+
+      // Add factory marker with popup :contentReference[oaicite:15]{index=15}
+      const facIcon = L.divIcon({
         className: 'factory-icon',
         html: `<div style="
-                background-image:url(${f.iconUrl});
-                width:100%; height:100%;
-              "></div>`
+          background-image:url(${f.iconUrl});
+        "></div>`
       });
-      const mk = L.marker(f.coords, {icon}).addTo(map);
-      mk.bindPopup(`<strong>${f.name}</strong>`);
-      mk.on('click', ()=> {
-        // clear existing farms
-        farmMarkers.clearLayers();
-        // generate & add new farm markers
-        const farms = randomFarms(f.coords, 50);
-        farms.forEach((latlng, idx) => {
-          L.marker(latlng)
-           .bindTooltip(`#${10000+idx}`, {permanent:false})
-           .addTo(farmMarkers);
-        });
-      });
-    });
-  </script>
-</body>
-</html>
+      L.marker(f.coords, {icon: facIcon})
+        .addTo(map)
+        .bindPopup(`<strong>${f.name}</strong>`);
+
+      map.setView(f.co:contentReference[oaicite:16]{index=16}:contentReference[oaicite:17]{index=17}:contentReference[oaicite:18]{index=18}
