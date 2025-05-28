@@ -3,19 +3,21 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Vat Levels &amp; Route Planner</title>
+  <title>Vat Levels & Route Planner</title>
 
-  <!-- Leaflet & Plugins CSS -->
+  <!-- Leaflet core CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
     crossorigin=""
   />
+  <!-- Geocoder CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
     crossorigin=""
   />
+  <!-- Routing Machine CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"
@@ -23,41 +25,42 @@
   />
 
   <style>
-    body, html { margin:0; padding:0; height:100% }
-    #map { width:100%; height:100% }
+    body, html { margin: 0; padding: 0; height: 100%; }
+    #map { width: 100%; height: 100%; }
+
     #route-controls {
-      position:absolute; top:10px; right:10px;
-      background:rgba(34,34,34,0.9);
-      padding:12px; border-radius:6px;
-      color:#f5f5f5; width:240px;
-      font-size:0.9rem; z-index:1000;
+      position: absolute;
+      top: 10px; right: 10px;
+      background: rgba(34,34,34,0.9);
+      padding: 12px; border-radius: 6px;
+      color: #f5f5f5; width: 240px;
+      font-size: 0.9rem; z-index: 1000;
     }
-    #route-controls label { display:block; margin-top:8px }
+    #route-controls label { display: block; margin-top: 8px; }
     #route-controls input {
-      width:100%; padding:6px; margin-top:4px;
-      border:none; border-radius:4px;
-      background:#2c2c2c; color:#f5f5f5;
+      width: 100%; padding: 6px; margin-top: 4px;
+      border: none; border-radius: 4px;
+      background: #2c2c2c; color: #f5f5f5;
     }
     #route-controls button {
-      width:100%; padding:8px; margin-top:8px;
-      border:none; border-radius:4px;
-      background:#3498db; color:#fff;
-      cursor:pointer;
+      width: 100%; padding: 8px; margin-top: 8px;
+      border: none; border-radius: 4px;
+      background: #3498db; color: #fff;
+      cursor: pointer;
     }
     #route-summary {
-      margin-top:12px; max-height:200px;
-      overflow:auto; background:#1b1b1b;
-      padding:8px; border-radius:4px;
+      margin-top: 12px; max-height: 200px;
+      overflow: auto; background: #1b1b1b;
+      padding: 8px; border-radius: 4px;
     }
     .farm-tooltip {
-      background:#fff !important;
-      color:#000 !important;
-      font-size:0.8rem;
+      background: #fff !important;
+      color: #000 !important;
+      font-size: 0.8rem;
     }
   </style>
 </head>
 <body>
-
   <div id="route-controls">
     <label>Tanker Capacity (L):</label>
     <input type="number" id="tankerCapacity" value="30000"/>
@@ -80,170 +83,155 @@
 
   <div id="map"></div>
 
-  <!-- Leaflet & Plugins JS -->
+  <!-- Leaflet core JS -->
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" crossorigin=""></script>
+  <!-- Geocoder -->
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js" crossorigin=""></script>
+  <!-- Routing Machine -->
   <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js" crossorigin=""></script>
+  <!-- Turf.js for random-point-in-polygon -->
+  <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+  <!-- MovingMarker for animation -->
   <script src="https://cdn.jsdelivr.net/npm/leaflet-moving-marker@2.0.0/MovingMarker.min.js" crossorigin=""></script>
 
   <script>
-    // --- 1) Generate 100 farms in true dairy regions ---
-    const LS_FARMS = 'farms';
-    let farms = JSON.parse(localStorage.getItem(LS_FARMS) || 'null');
-    if (!Array.isArray(farms) || farms.length !== 100) {
-      // Bounding boxes for dairy regions
-      const regions = [
-        {latMin:-43.2, latMax:-42.2, lngMin:170.5, lngMax:172.0}, // West Coast
-        {latMin:-38.5, latMax:-37.5, lngMin:174.5, lngMax:176.0}, // Waikato
-        {latMin:-44.5, latMax:-43.0, lngMin:171.5, lngMax:173.5}, // Canterbury Plains
-        {latMin:-39.4, latMax:-38.9, lngMin:173.8, lngMax:174.5}, // Taranaki
-        {latMin:-46.5, latMax:-45.0, lngMin:167.0, lngMax:168.0}  // Southland
-      ];
-      farms = [];
-      for (let i = 0; i < 100; i++) {
-        const box = regions[i % regions.length];
-        const lat = box.latMin + Math.random() * (box.latMax - box.latMin);
-        const lng = box.lngMin + Math.random() * (box.lngMax - box.lngMin);
-        const vats = [Math.floor(2000 + Math.random()*18000)];
-        if (Math.random() < 0.1) vats.push(Math.floor(2000 + Math.random()*18000));
-        farms.push({
+    // 1) Load dairy-farm polygons & generate 100 random farm points within them
+    fetch('dairy_farms.geojson')
+      .then(res => res.json())
+      .then(dairyGeo => {
+        const pts = turf.randomPoint(100, { mask: dairyGeo });
+        const farms = pts.features.map((f,i) => ({
           supplier: String(10000 + i),
-          vats,
-          coords: {lat, lng}
-        });
-      }
-      localStorage.setItem(LS_FARMS, JSON.stringify(farms));
-    }
+          vats: [
+            Math.floor(2000 + Math.random()*18000),
+            ...(Math.random()<0.1 ? [Math.floor(2000 + Math.random()*18000)] : [])
+          ],
+          coords: [
+            f.geometry.coordinates[1],
+            f.geometry.coordinates[0]
+          ]
+        }));
 
-    // --- 2) Initialize the Map ---
-    const map = L.map('map').setView([-42, 173], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:'© OpenStreetMap'
-    }).addTo(map);
+        // Initialize map
+        const map = L.map('map').setView([-42,173],6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+          attribution:'© OpenStreetMap'
+        }).addTo(map);
 
-    // --- 3) Place Farm Markers ---
-    let startCoords = null;
-    farms.forEach(f => {
-      const marker = L.marker([f.coords.lat, f.coords.lng]).addTo(map);
-      const tip = `<strong>#${f.supplier}</strong><br>` +
-        f.vats.map((v,i) => `Vat ${i+1}: ${v.toLocaleString()} L`).join('<br>');
-      marker.bindTooltip(tip, {
-        direction:'right',
-        className:'farm-tooltip'
-      });
-      marker.on('click', () => {
-        startCoords = marker.getLatLng();
-        document.getElementById('startAddress').value = `Farm #${f.supplier}`;
-        document.getElementById('summaryText').innerText =
-          `Start set to Farm #${f.supplier}`;
-      });
-    });
-
-    // --- 4) Geocoder Setup (Nominatim) ---
-    const geocoder = L.Control.geocoder({ defaultMarkGeocode:false }).addTo(map);
-    document.getElementById('geocodeBtn').onclick = () => {
-      const addr = document.getElementById('startAddress').value;
-      if (!addr) return alert("Please enter an address");
-      geocoder.options.geocoder.geocode(addr, results => {
-        if (!results.length) return alert("Address not found");
-        startCoords = results[0].center;
-        map.setView(startCoords, 10);
-        L.marker(startCoords).addTo(map)
-          .bindPopup("Start Location").openPopup();
-      });
-    };
-
-    // --- 5) Nearest-Neighbor Selection Function ---
-    function selectStops(capacity, candidates) {
-      let remaining = capacity;
-      let current   = startCoords;
-      const seq     = [];
-      const pool    = candidates.slice();
-      while (true) {
-        pool.forEach(f => {
-          f.dist = current
-            ? current.distanceTo(f.coords)
-            : 0;
-        });
-        pool.sort((a,b) => a.dist - b.dist);
-        const idx = pool.findIndex(f => {
-          const vol = f.vats.reduce((a,b)=>a+b,0);
-          return vol <= remaining;
-        });
-        if (idx < 0) break;
-        const next = pool.splice(idx,1)[0];
-        seq.push(next);
-        remaining -= next.vats.reduce((a,b)=>a+b,0);
-        current    = L.latLng(next.coords);
-      }
-      return { stops: seq, collected: capacity - remaining, remaining };
-    }
-
-    // --- 6) Plan Route, Draw, Animate & ETA ---
-    document.getElementById('planRouteBtn').onclick = () => {
-      const truckCap   = +document.getElementById('tankerCapacity').value;
-      const trailerCap = +document.getElementById('trailerCapacity').value;
-      if (!startCoords) return alert("Click a farm or enter an address");
-
-      // Calculate truck vs trailer stops
-      const {stops:truckStops,   collected:truckVol,   remaining:truckRem}   =
-        selectStops(truckCap, farms);
-      const remainingFarms = farms.filter(f => !truckStops.includes(f));
-      const {stops:trailStops,  collected:trailVol,  remaining:trailRem}  =
-        selectStops(trailerCap, remainingFarms);
-
-      // Build summary HTML
-      let html = `<em>Truck Stops:</em><br>` +
-        truckStops.map(f=>`#${f.supplier}: ${f.vats.reduce((a,b)=>a+b,0).toLocaleString()} L`).join('<br>');
-      html += `<br><strong>Truck Total:</strong> ${truckVol.toLocaleString()} L<br>` +
-        `Remaining: ${truckRem.toLocaleString()} L<br><hr>`;
-      html += `<em>Trailer Stops:</em><br>` +
-        trailStops.map(f=>`#${f.supplier}: ${f.vats.reduce((a,b)=>a+b,0).toLocaleString()} L`).join('<br>');
-      html += `<br><strong>Trailer Total:</strong> ${trailVol.toLocaleString()} L<br>` +
-        `Remaining: ${trailRem.toLocaleString()} L`;
-      document.getElementById('summaryText').innerHTML = html;
-
-      // Prepare waypoints
-      const allStops = [...truckStops, ...trailStops];
-      const waypoints = [
-        L.latLng(startCoords),
-        ...allStops.map(f=>L.latLng(f.coords)),
-        L.latLng(startCoords)
-      ];
-
-      // Remove old layers
-      if (window.routeControl) map.removeControl(window.routeControl);
-      if (window.movingMarker) map.removeLayer(window.movingMarker);
-
-      // Draw route
-      window.routeControl = L.Routing.control({
-        waypoints,
-        showAlternatives: false,
-        routeWhileDragging: false
-      }).addTo(map);
-
-      // On route found: animate and show ETA
-      window.routeControl.on('routesfound', e => {
-        const route = e.routes[0];
-        const coords = route.coordinates;
-        const totalTime = route.summary.totalTime * 1000; // ms
-
-        // MovingMarker animation
-        window.movingMarker = L.Marker.movingMarker(
-          coords,
-          totalTime,
-          {autostart:true}
-        ).addTo(map);
-        window.movingMarker.on('end', ()=> {
-          document.getElementById('etaText').innerHTML = `<strong>Arrived</strong>`;
+        // Place markers with hover tooltips & click→start
+        let startCoords = null;
+        farms.forEach(fp => {
+          const mk = L.marker(fp.coords).addTo(map);
+          const tip = `<strong>#${fp.supplier}</strong><br>` +
+            fp.vats.map((v,i)=>`Vat ${i+1}: ${v.toLocaleString()} L`).join('<br>');
+          mk.bindTooltip(tip, { direction:'right', className:'farm-tooltip' });
+          mk.on('click', () => {
+            startCoords = mk.getLatLng();
+            document.getElementById('startAddress').value = `Farm #${fp.supplier}`;
+            document.getElementById('summaryText').innerText =
+              `Start set to Farm #${fp.supplier}`;
+          });
         });
 
-        // Display ETA
-        const eta = new Date(Date.now() + route.summary.totalTime*1000)
-          .toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-        document.getElementById('etaText').innerHTML = `<strong>ETA:</strong> ${eta}`;
+        // Geocoder setup
+        const geocoder = L.Control.geocoder({ defaultMarkGeocode:false }).addTo(map);
+        document.getElementById('geocodeBtn').onclick = () => {
+          const addr = document.getElementById('startAddress').value;
+          if (!addr) return alert("Enter an address");
+          geocoder.options.geocoder.geocode(addr, res => {
+            if (!res.length) return alert("Address not found");
+            startCoords = res[0].center;
+            map.setView(startCoords,10);
+            L.marker(startCoords).addTo(map)
+              .bindPopup("Start Location").openPopup();
+          });
+        };
+
+        // Nearest-neighbor selection
+        function selectStops(capacity, candidates) {
+          let rem = capacity;
+          let cur = startCoords;
+          const seq = [];
+          const pool = candidates.slice();
+          while (true) {
+            pool.forEach(f => {
+              f.dist = cur
+                ? cur.distanceTo(f.coords)
+                : 0;
+            });
+            pool.sort((a,b)=>a.dist - b.dist);
+            const idx = pool.findIndex(f=>{
+              const vol = f.vats.reduce((a,b)=>a+b,0);
+              return vol <= rem;
+            });
+            if (idx < 0) break;
+            const nxt = pool.splice(idx,1)[0];
+            seq.push(nxt);
+            rem -= nxt.vats.reduce((a,b)=>a+b,0);
+            cur = L.latLng(nxt.coords);
+          }
+          return { stops: seq, collected: capacity-rem, remaining: rem };
+        }
+
+        // Plan route, draw & animate
+        document.getElementById('planRouteBtn').onclick = () => {
+          const truckCap   = +document.getElementById('tankerCapacity').value;
+          const trailerCap = +document.getElementById('trailerCapacity').value;
+          if (!startCoords) return alert("Set a start location first");
+
+          const { stops:truckStops, collected:truckVol,   remaining:truckRem } =
+            selectStops(truckCap, farms);
+          const left = farms.filter(f=>!truckStops.includes(f));
+          const { stops:trailStops, collected:trailVol,   remaining:trailRem } =
+            selectStops(trailerCap, left);
+
+          // Summary
+          let html = `<em>Truck Stops</em><br>` +
+            truckStops.map(f=>`#${f.supplier}: ${f.vats.reduce((a,b)=>a+b,0).toLocaleString()} L`).join('<br>') +
+            `<br><strong>Truck Total:</strong> ${truckVol.toLocaleString()} L<br>` +
+            `Remaining: ${truckRem.toLocaleString()} L<br><hr>` +
+            `<em>Trailer Stops</em><br>` +
+            trailStops.map(f=>`#${f.supplier}: ${f.vats.reduce((a,b)=>a+b,0).toLocaleString()} L`).join('<br>') +
+            `<br><strong>Trailer Total:</strong> ${trailVol.toLocaleString()} L<br>` +
+            `Remaining: ${trailRem.toLocaleString()} L`;
+          document.getElementById('summaryText').innerHTML = html;
+
+          // Waypoints
+          const allStops = [...truckStops, ...trailStops];
+          const wpts = [
+            L.latLng(startCoords),
+            ...allStops.map(f=>L.latLng(f.coords)),
+            L.latLng(startCoords)
+          ];
+
+          // Clear existing
+          if (window.routeControl) map.removeControl(window.routeControl);
+          if (window.movingMarker) map.removeLayer(window.movingMarker);
+
+          // Draw route
+          window.routeControl = L.Routing.control({
+            waypoints: wpts,
+            showAlternatives: false,
+            routeWhileDragging: false
+          }).addTo(map);
+
+          window.routeControl.on('routesfound', e => {
+            const route = e.routes[0];
+            const coords = route.coordinates;
+            const ms = route.summary.totalTime * 1000;
+
+            window.movingMarker = L.Marker.movingMarker(coords, ms, {autostart:true})
+              .addTo(map)
+              .on('end', ()=> {
+                document.getElementById('etaText').innerHTML = `<strong>Arrived</strong>`;
+              });
+
+            const eta = new Date(Date.now() + route.summary.totalTime*1000)
+              .toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+            document.getElementById('etaText').innerHTML = `<strong>ETA:</strong> ${eta}`;
+          });
+        };
       });
-    };
   </script>
 </body>
 </html>
