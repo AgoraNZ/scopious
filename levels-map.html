@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Vat Levels & Route Planner</title>
 
-  <!-- Leaflet core CSS -->
+  <!-- Leaflet CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
@@ -17,10 +17,10 @@
     href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"
     crossorigin=""
   />
+
   <style>
     body, html { margin:0; padding:0; height:100% }
     #map { width:100%; height:100% }
-    /* Control panel */
     #route-controls {
       position:absolute; top:10px; right:10px;
       background:rgba(34,34,34,0.9);
@@ -35,9 +35,16 @@
       background:#2c2c2c; color:#f5f5f5;
     }
     #route-controls button { cursor:pointer; background:#3498db; }
-    #route-summary { margin-top:12px; background:#1b1b1b; padding:8px; border-radius:4px; max-height:200px; overflow:auto; }
-    .farm-tooltip { background:#fff!important; color:#000!important; font-size:0.8rem; }
-    .factory-icon { width:32px; height:32px; border-radius:4px; background-size:cover; border:2px solid #fff }
+    #route-summary {
+      margin-top:12px; background:#1b1b1b;
+      padding:8px; border-radius:4px;
+      max-height:200px; overflow:auto;
+    }
+    .farm-tooltip { background:#fff!important; color:#000!important; font-size:0.8rem }
+    .factory-icon {
+      width:32px; height:32px;
+      background-size:cover; border:2px solid #fff; border-radius:4px;
+    }
   </style>
 </head>
 <body>
@@ -48,85 +55,163 @@
       <option value="westland">Westland Milk Products (Hokitika)</option>
       <option value="ofi">OFI Milk Factory (Tokoroa)</option>
     </select>
-
     <label>Tanker Capacity (L):</label>
     <input type="number" id="tankerCapacity" value="30000"/>
-
     <label>Trailer Capacity (L):</label>
     <input type="number" id="trailerCapacity" value="20000"/>
-
     <button id="planRouteBtn">Plan Route</button>
-
     <div id="route-summary">
       <strong>Summary:</strong>
       <div id="summaryText">—</div>
       <div id="etaText"></div>
     </div>
   </div>
-
   <div id="map"></div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" crossorigin=""></script>
   <!-- Routing Machine -->
   <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js" crossorigin=""></script>
-  <!-- MovingMarker plugin -->
+  <!-- MovingMarker -->
   <script src="https://cdn.jsdelivr.net/npm/leaflet-moving-marker@2.0.0/MovingMarker.min.js" crossorigin=""></script>
 
   <script>
-    // Factory definitions with verified coordinates
+    // 1) Factory definitions
     const factories = {
       westland: {
         name: 'Westland Milk Products',
-        coords: L.latLng(-42.7167, 170.9667), // :contentReference[oaicite:12]{index=12}
+        coords: L.latLng(-42.7167, 170.9667),
         iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/4a/Westland_Milk_Products_dairy_processing_plant.jpg'
       },
       ofi: {
         name: 'OFI Milk Factory',
-        coords: L.latLng(-38.2333, 175.8667), // :contentReference[oaicite:13]{index=13}
+        coords: L.latLng(-38.2333, 175.8667),
         iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/OFI_Milking_factory_tokoroa.jpg/320px-OFI_Milking_factory_tokoroa.jpg'
       }
     };
 
-    // Prepare NZ-wide random sample (will filter by distance)
+    // 2) Sample 500 NZ‐wide points for filtering
     const allSamples = [];
-    for (let i = 0; i < 500; i++) {
-      const lat = -47 + Math.random() * 13;   // NZ lat range
-      const lng = 166 + Math.random() * 13;  // NZ lng range
-      allSamples.push({ coords: L.latLng(lat, lng), vats: [Math.floor(2000 + Math.random()*18000)] });
+    for (let i=0;i<500;i++){
+      const lat = -47 + Math.random()*13;  // NZ lat range
+      const lng = 166 + Math.random()*13; // NZ long range
+      allSamples.push({
+        coords:L.latLng(lat,lng),
+        vats:[Math.floor(2000+Math.random()*18000)]
+      });
     }
 
-    // Initialize map (Quick Start Guide) :contentReference[oaicite:14]{index=14}
-    const map = L.map('map').setView([-42, 173], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+    // 3) Map init
+    const map = L.map('map').setView([-42,173],6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      attribution:'© OpenStreetMap'
     }).addTo(map);
 
     let farmLayer = L.layerGroup().addTo(map),
         routeControl, movingMarker, startCoords;
 
-    // On factory selection: plot factory icon + farms within 100 km
-    document.getElementById('factorySelect').addEventListener('change', e => {
-      const key = e.target.value;
-      farmLayer.clearLayers();
-      if (routeControl) map.removeControl(routeControl);
-      if (movingMarker) map.removeLayer(movingMarker);
-      document.getElementById('summaryText').innerText = '—';
-      document.getElementById('etaText').innerText = '';
-      if (!key) return;
-
-      const f = factories[key];
-      startCoords = f.coords;
-
-      // Add factory marker with popup :contentReference[oaicite:15]{index=15}
-      const facIcon = L.divIcon({
-        className: 'factory-icon',
-        html: `<div style="
-          background-image:url(${f.iconUrl});
-        "></div>`
+    // 4) Render factory icons & click handler
+    Object.entries(factories).forEach(([key,f])=>{
+      const icon = L.divIcon({
+        className:'factory-icon',
+        html:`<div style="background-image:url(${f.iconUrl})"></div>`
       });
-      L.marker(f.coords, {icon: facIcon})
+      L.marker(f.coords,{icon})
         .addTo(map)
-        .bindPopup(`<strong>${f.name}</strong>`);
+        .bindPopup(`<strong>${f.name}</strong>`)
+        .on('click', ()=>{
+          startCoords = f.coords;
+          map.setView(f.coords,9);
+          farmLayer.clearLayers();
+          // filter farms within 100km
+          const nearby = allSamples.filter(s=>
+            f.coords.distanceTo(s.coords)<=100000
+          );
+          nearby.forEach((s,i)=>{
+            L.marker(s.coords)
+             .bindTooltip(
+               `#${10000+i}<br>${s.vats[0].toLocaleString()} L`,
+               {direction:'right',className:'farm-tooltip'}
+             )
+             .addTo(farmLayer);
+          });
+          document.getElementById('summaryText').innerText = `Start → ${f.name}`;
+          document.getElementById('etaText').innerText = '';
+          // clear old route/animation
+          if(routeControl) map.removeControl(routeControl);
+          if(movingMarker) map.removeLayer(movingMarker);
+        });
+    });
 
-      map.setView(f.co:contentReference[oaicite:16]{index=16}:contentReference[oaicite:17]{index=17}:contentReference[oaicite:18]{index=18}
+    // 5) Nearest‐neighbor select
+    function selectStops(capacity, candidates){
+      let rem=capacity,cur=startCoords;
+      const seq=[], pool=candidates.slice();
+      while(true){
+        pool.forEach(f=>f.dist=cur.distanceTo(f.coords));
+        pool.sort((a,b)=>a.dist-b.dist);
+        const idx=pool.findIndex(f=>f.vats[0]<=rem);
+        if(idx<0) break;
+        const nxt=pool.splice(idx,1)[0];
+        seq.push(nxt);
+        rem-=nxt.vats[0];
+        cur=nxt.coords;
+      }
+      return seq;
+    }
+
+    // 6) Plan route & animate
+    document.getElementById('planRouteBtn').onclick = ()=>{
+      if(!startCoords) return alert('Click a factory first');
+      // gather current farm objects
+      const farms=[];
+      farmLayer.eachLayer(m=> farms.push({
+        coords:m.getLatLng(),
+        vats:[0]
+      }));
+      const truckStops = selectStops(
+        +document.getElementById('tankerCapacity').value,
+        farms
+      );
+      const leftover = farms.filter(f=>!truckStops.includes(f));
+      const trailStops = selectStops(
+        +document.getElementById('trailerCapacity').value,
+        leftover
+      );
+      // summary
+      const sum=`Truck: ${truckStops.length} stops<br>
+        Trailer: ${trailStops.length} stops`;
+      document.getElementById('summaryText').innerHTML=sum;
+      document.getElementById('etaText').innerText='';
+
+      // waypoints
+      const wpts=[
+        startCoords,
+        ...truckStops.map(f=>f.coords),
+        ...trailStops.map(f=>f.coords),
+        startCoords
+      ];
+      if(routeControl) map.removeControl(routeControl);
+      if(movingMarker) map.removeLayer(movingMarker);
+      routeControl=L.Routing.control({
+        waypoints:wpts,
+        showAlternatives:false,
+        routeWhileDragging:false
+      }).addTo(map);
+      routeControl.on('routesfound',e=>{
+        const route=e.routes[0];
+        const coords=route.coordinates;
+        const ms=route.summary.totalTime*1000;
+        movingMarker=L.Marker.movingMarker(coords,ms,{autostart:true})
+          .addTo(map)
+          .on('end',()=>{
+            document.getElementById('etaText').innerHTML='<strong>Arrived</strong>';
+          });
+        const eta=new Date(Date.now()+route.summary.totalTime*1000)
+          .toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        document.getElementById('etaText').innerHTML=`<strong>ETA:</strong> ${eta}`;
+      });
+    };
+  </script>
+</body>
+</html>
