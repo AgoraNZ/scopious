@@ -22,25 +22,31 @@
   <style>
     body, html { margin:0; padding:0; height:100%; }
     #map { width:100%; height:100%; }
-    /* Route controls on right */
+
+    /* Right‐hand route panel */
     #route-controls {
       position: absolute; top: 10px; right: 10px;
-      background: rgba(34,34,34,0.9); padding:12px;
-      border-radius:6px; color:#f5f5f5;
-      font-size:0.9rem; z-index:1000; width:200px;
+      background: rgba(34,34,34,0.9);
+      padding: 12px; border-radius: 6px;
+      color: #f5f5f5; width: 220px;
+      font-size: 0.9rem; z-index: 1000;
     }
-    #route-controls input,
-    #route-controls button {
-      width:100%; margin:4px 0; padding:6px;
+    #route-controls label { display:block; margin-top:8px; }
+    #route-controls input {
+      width:100%; padding:6px; margin-top:4px;
       border:none; border-radius:4px;
+      background:#2c2c2c; color:#f5f5f5;
     }
     #route-controls button {
-      background:#3498db; color:#fff; cursor:pointer;
+      width:100%; padding:8px;
+      margin-top:8px; border:none;
+      border-radius:4px;
+      background:#3498db; color:#fff;
+      cursor:pointer;
     }
-    #route-summary { margin-top:8px; }
+    #route-summary { margin-top:12px; max-height:200px; overflow:auto; background:#1b1b1b; padding:8px; border-radius:4px; }
     .farm-tooltip {
-      background: #fff !important;
-      color: #000 !important;
+      background:#fff !important; color:#000 !important;
       font-size:0.8rem;
     }
   </style>
@@ -50,12 +56,15 @@
     <label>Tanker Capacity (L):</label>
     <input type="number" id="tankerCapacity" value="30000"/>
 
+    <label>Trailer Capacity (L):</label>
+    <input type="number" id="trailerCapacity" value="20000"/>
+
     <label>Start Location:</label>
-    <input type="text" id="startAddress" placeholder="Enter address"/>
+    <input type="text" id="startAddress" placeholder="Click a farm or enter address"/>
     <button id="geocodeBtn">Locate</button>
 
     <button id="planRouteBtn">Plan Route</button>
-    <hr style="border-color:#444; margin:8px 0;"/>
+
     <div id="route-summary">
       <strong>Summary:</strong>
       <div id="summaryText">—</div>
@@ -68,105 +77,136 @@
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js" crossorigin=""></script>
   <script>
-    // 1. Ensure exactly 100 farms in localStorage
+    // 1. Generate 100 farms around real dairy towns with slight random offset
     const LS_FARMS = 'farms';
     let farms = JSON.parse(localStorage.getItem(LS_FARMS) || 'null');
     if (!Array.isArray(farms) || farms.length !== 100) {
+      const towns = [
+        {lat:-41.7393, lng:171.5692}, // Westport
+        {lat:-42.4503, lng:171.2079}, // Greymouth
+        {lat:-42.7167, lng:170.9667}, // Hokitika
+        {lat:-37.7833, lng:175.2833}, // Hamilton
+        {lat:-37.8833, lng:175.4667}, // Cambridge
+      ];
       farms = [];
       for (let i = 0; i < 100; i++) {
-        // random supplier number 10000–99999
-        const supplier = String(Math.floor(10000 + Math.random()*90000));
-        // 1–2 vats
-        const vats = [Math.floor(Math.random()*20000)];
-        if (Math.random() < 0.1) vats.push(Math.floor(Math.random()*20000));
-        // random NZ coords in bounding box
-        const lat = -47 + Math.random()*13;    // -47 to -34
-        const lng = 166 + Math.random()*13;    // 166 to 179
-        farms.push({ supplier, vats, coords: { lat, lng } });
+        const base = towns[i % towns.length];
+        const lat = base.lat  + (Math.random()-0.5)*0.1;
+        const lng = base.lng  + (Math.random()-0.5)*0.1;
+        const vats = [Math.floor(Math.random()*18000+2000)];
+        if (Math.random()<0.1) vats.push(Math.floor(Math.random()*18000+2000));
+        farms.push({
+          supplier: String(10000 + i),
+          vats,
+          coords: {lat,lng}
+        });
       }
       localStorage.setItem(LS_FARMS, JSON.stringify(farms));
     }
 
-    // 2. Initialize map
-    const map = L.map('map').setView([-42, 173], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // 2. Initialize Leaflet map
+    const map = L.map('map').setView([-42,173], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
       attribution:'© OpenStreetMap'
     }).addTo(map);
 
-    // 3. Place farm markers with permanent tooltips and click-to-start
-    farms.forEach(f => {
-      const marker = L.marker([f.coords.lat, f.coords.lng]).addTo(map);
-      const html = `<strong>#${f.supplier}</strong><br>` +
+    // 3. Place farm markers with tooltip on hover & click to set start
+    let startCoords = null;
+    farms.forEach(f=>{
+      const mk = L.marker([f.coords.lat, f.coords.lng]).addTo(map);
+      const tip = `<strong>#${f.supplier}</strong><br>` +
         f.vats.map((v,i)=>`Vat ${i+1}: ${v.toLocaleString()} L`).join('<br>');
-      marker.bindTooltip(html, {
-        permanent: true,
-        direction: 'right',
-        className: 'farm-tooltip'
-      });
-      marker.on('click', () => {
-        startCoords = marker.getLatLng();
+      mk.bindTooltip(tip, {direction:'right', className:'farm-tooltip'});
+      mk.on('click', ()=>{
+        startCoords = mk.getLatLng();
+        document.getElementById('startAddress').value = `Farm #${f.supplier}`;
         document.getElementById('summaryText').innerText =
-          `Start set at Farm ${f.supplier}`;
+          `Start set to Farm #${f.supplier}`;
       });
     });
 
-    // 4. Geocoder setup (Nominatim)
-    let startCoords = null;
-    const geocoder = L.Control.geocoder({ defaultMarkGeocode: false }).addTo(map);
-    document.getElementById('geocodeBtn').onclick = () => {
+    // 4. Geocoder (Nominatim)
+    const geocoder = L.Control.geocoder({ defaultMarkGeocode:false }).addTo(map);
+    document.getElementById('geocodeBtn').onclick = ()=>{
       const addr = document.getElementById('startAddress').value;
       if (!addr) return alert("Enter an address");
-      geocoder.options.geocoder.geocode(addr, results => {
-        if (!results.length) return alert("Address not found");
-        startCoords = results[0].center;
-        map.setView(startCoords, 10);
+      geocoder.options.geocoder.geocode(addr, res=>{
+        if (!res.length) return alert("Address not found");
+        startCoords = res[0].center;
+        map.setView(startCoords,10);
         L.marker(startCoords).addTo(map)
           .bindPopup("Start Location").openPopup();
       });
     };
 
-    // 5. Nearest-Neighbor heuristic
+    // 5. Nearest‐Neighbor selection helper
     function selectFarms(capacity, list) {
-      let remaining = capacity, current = startCoords;
+      let rem = capacity;
+      let cur = startCoords;
       const seq = [], pool = list.slice();
-      while (true) {
-        pool.forEach(f => {
-          f.dist = current
-            ? current.distanceTo(f.coords)
+      while(true) {
+        pool.forEach(f=>{
+          f.dist = cur
+            ? cur.distanceTo(L.latLng(f.coords))
             : 0;
         });
         pool.sort((a,b)=>a.dist - b.dist);
-        const next = pool.find(f=>{
+        const idx = pool.findIndex(f=>{
           const vol = f.vats.reduce((a,b)=>a+b,0);
-          return vol <= remaining;
+          return vol <= rem;
         });
-        if (!next) break;
+        if (idx < 0) break;
+        const next = pool.splice(idx,1)[0];
         seq.push(next);
-        remaining -= next.vats.reduce((a,b)=>a+b,0);
-        current = L.latLng(next.coords);
-        pool.splice(pool.indexOf(next),1);
+        rem -= next.vats.reduce((a,b)=>a+b,0);
+        cur = L.latLng(next.coords);
       }
-      return { seq, collected: capacity-remaining, remaining };
+      return { seq, collected: capacity-rem, remaining: rem };
     }
 
-    // 6. Plan and render route
-    document.getElementById('planRouteBtn').onclick = () => {
-      const cap = Number(document.getElementById('tankerCapacity').value);
+    // 6. Plan route & show summary
+    document.getElementById('planRouteBtn').onclick = ()=>{
+      const truckCap   = Number(document.getElementById('tankerCapacity').value);
+      const trailerCap = Number(document.getElementById('trailerCapacity').value);
       if (!startCoords) return alert("Set a start location first");
-      const { seq, collected, remaining } = selectFarms(cap, farms);
-      document.getElementById('summaryText').innerText =
-        `Stops: ${seq.length}, Collected: ${collected.toLocaleString()} L, Remaining: ${remaining.toLocaleString()} L`;
 
-      const waypts = [
+      // Truck leg
+      const {seq:truckStops, collected:truckVol, remaining:truckRem} =
+        selectFarms(truckCap, farms);
+      // Trailer leg
+      const leftoverFarms = farms.filter(f=>!truckStops.includes(f));
+      const {seq:trailerStops, collected:trailerVol, remaining:trailerRem} =
+        selectFarms(trailerCap, leftoverFarms);
+
+      // Build summary HTML
+      let html = `<em>Truck Stops</em><br>`;
+      html += truckStops.map(f=>
+        `#${f.supplier}: ${f.vats.reduce((a,b)=>a+b,0).toLocaleString()} L`
+      ).join('<br>') + `<br>`;
+      html += `<strong>Truck Total:</strong> ${truckVol.toLocaleString()} L<br>`;
+      html += `Remaining Truck Capacity: ${truckRem.toLocaleString()} L<br><hr>`;
+      html += `<em>Trailer Stops</em><br>`;
+      html += trailerStops.map(f=>
+        `#${f.supplier}: ${f.vats.reduce((a,b)=>a+b,0).toLocaleString()} L`
+      ).join('<br>') + `<br>`;
+      html += `<strong>Trailer Total:</strong> ${trailerVol.toLocaleString()} L<br>`;
+      html += `Remaining Trailer Capacity: ${trailerRem.toLocaleString()} L`;
+      document.getElementById('summaryText').innerHTML = html;
+
+      // Combine all stops for routing
+      const allStops = [ ...truckStops, ...trailerStops ];
+      const waypoints = [
         L.latLng(startCoords),
-        ...seq.map(f => L.latLng(f.coords)),
+        ...allStops.map(f=>L.latLng(f.coords)),
         L.latLng(startCoords)
       ];
+
+      // Draw route
       if (window.routeControl) map.removeControl(window.routeControl);
       window.routeControl = L.Routing.control({
-        waypoints: waypts,
-        showAlternatives: false,
-        routeWhileDragging: false
+        waypoints,
+        routeWhileDragging:false,
+        showAlternatives:false
       }).addTo(map);
     };
   </script>
