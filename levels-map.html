@@ -99,11 +99,11 @@
 
     // 2. Generate 100 farm samples near known dairy towns
     const towns = [
-      {lat:-41.7393, lng:171.5692()}, // Westport
-      {lat:-42.4503, lng:171.2079()}, // Greymouth
-      {lat:-42.7167, lng:170.9667()}, // Hokitika
-      {lat:-37.7833, lng:175.2833()}, // Hamilton
-      {lat:-37.8833, lng:175.4667()}  // Cambridge
+      {lat:-41.7393, lng:171.5692}, // Westport
+      {lat:-42.4503, lng:171.2079}, // Greymouth
+      {lat:-42.7167, lng:170.9667}, // Hokitika
+      {lat:-37.7833, lng:175.2833}, // Hamilton
+      {lat:-37.8833, lng:175.4667}  // Cambridge
     ];
     let farms = JSON.parse(localStorage.getItem('farms')||'null');
     if(!Array.isArray(farms)||farms.length!==100){
