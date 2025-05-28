@@ -15,73 +15,63 @@
       --info: #3498db;
       --critical: #e74c3c;
     }
-    *, *::before, *::after { box-sizing: border-box; }
-    body { margin:0; font-family:sans-serif; background:var(--bg); color:var(--text); }
-    .container { max-width:960px; margin:20px auto; padding:0 16px; }
-    h1 { margin-bottom:16px; }
-
-    .map-btn { position: fixed; top:20px; right:20px; background:#3498db; color:#fff;
-      border:none; padding:8px 12px; border-radius:4px; cursor:pointer; z-index:1000; }
-
-    .summary { background:var(--panel-bg); border:1px solid var(--border);
-      border-radius:6px; padding:12px; margin-bottom:20px; }
-    .summary-row { display:flex; justify-content:space-between; font-size:0.9rem; }
-    .summary-row div { flex:1; text-align:center; }
-
-    .add-farm-btn { margin-bottom:12px; text-align:right; }
-    .add-farm-btn button { padding:8px 12px; background:#3498db; border:none;
-      color:#fff; border-radius:4px; cursor:pointer; }
-    #addFarmForm { display:none; background:var(--panel-bg); border:1px solid var(--border);
-      border-radius:6px; padding:12px; margin-bottom:16px; }
-    #addFarmForm label { display:block; margin-bottom:8px; font-size:0.9rem; }
-    #addFarmForm input[type="text"] { width:100%; padding:6px; border:1px solid #555;
-      border-radius:4px; background:#333; color:var(--text); }
-    .alarms-list { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin:12px 0; }
-    .alarms-list label { display:flex; align-items:center; font-size:0.9rem; }
-    .alarms-list input { margin-right:6px; }
-    #addFarmForm .buttons { text-align:right; margin-top:8px; }
-    #addFarmForm .buttons button { padding:6px 10px; border:none; border-radius:4px;
-      background:#3498db; color:#fff; cursor:pointer; margin-left:8px; }
-
-    .search { margin-bottom:16px; }
-    .search input { width:100%; padding:8px 12px; border:none; border-radius:4px;
-      background:#2c2c2c; color:var(--text); font-size:0.95rem; }
-
-    .vat-info { font-size:0.85rem; color:#ccc; text-align:right; margin-bottom:8px; }
-    .vat-info div { margin:2px 0; }
-
-    .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-      gap:16px; }
-    .card { background:var(--panel-bg); border:1px solid var(--border);
-      border-radius:6px; display:flex; flex-direction:column; padding:16px; }
-    .card-header { margin-bottom:8px; }
-    .card-header .supplier { font-weight:bold; color:var(--text);
-      text-decoration:none; font-size:1rem; }
-    .card-body { flex:1; margin-bottom:12px; }
-    .card-body a { text-decoration:none; color:inherit; }
-    .status { display:inline-flex; align-items:center; font-size:0.9rem;
-      padding:4px 8px; border-radius:4px; color:#fff; margin-bottom:8px; }
-    .status-ok       { background:var(--ok); }
-    .status-warning  { background:var(--warning); }
-    .status-info     { background:var(--info); }
-    .status-critical { background:var(--critical); }
-    .status .dot { width:10px; height:10px; border-radius:50%;
-      background:currentColor; margin-right:6px; }
-    .alarm-name, .time { font-size:0.85rem; color:#ccc; margin-bottom:4px; }
-    .card-actions { display:flex; gap:8px; }
-    .card-actions button { flex:1; padding:6px 8px; font-size:0.9rem;
-      border:none; border-radius:4px; cursor:pointer; }
-    .btn-ticket { background:var(--critical); color:#fff; }
-    .btn-edit   { background:#3498db; color:#fff; }
-
-    .permissions { margin:24px 0; text-align:center; font-size:0.9rem; }
-    .permissions label { margin:0 12px; cursor:pointer; }
-    .permissions input { margin-right:4px; }
-
-    .footer-btn { text-align:center; margin-bottom:24px; }
-    .footer-btn button { padding:10px 20px; font-size:1rem;
-      background:#3498db; color:#fff; border:none; border-radius:4px;
-      cursor:pointer; }
+    *,*::before,*::after{box-sizing:border-box;}
+    body{margin:0;font-family:sans-serif;background:var(--bg);color:var(--text)}
+    .container{max-width:960px;margin:20px auto;padding:0 16px}
+    h1{margin-bottom:16px}
+    .map-btn{position:fixed;top:20px;right:20px;background:#3498db;color:#fff;
+      border:none;padding:8px 12px;border-radius:4px;cursor:pointer;z-index:1000}
+    .summary{background:var(--panel-bg);border:1px solid var(--border);
+      border-radius:6px;padding:12px;margin-bottom:20px}
+    .summary-row{display:flex;justify-content:space-between;font-size:0.9rem}
+    .summary-row div{flex:1;text-align:center}
+    .add-farm-btn{margin-bottom:12px;text-align:right}
+    .add-farm-btn button{padding:8px 12px;background:#3498db;border:none;
+      color:#fff;border-radius:4px;cursor:pointer}
+    #addFarmForm{display:none;background:var(--panel-bg);border:1px solid var(--border);
+      border-radius:6px;padding:12px;margin-bottom:16px}
+    #addFarmForm label{display:block;margin-bottom:8px;font-size:0.9rem}
+    #addFarmForm input[type="text"]{width:100%;padding:6px;border:1px solid #555;
+      border-radius:4px;background:#333;color:var(--text)}
+    .alarms-list{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:12px 0}
+    .alarms-list label{display:flex;align-items:center;font-size:0.9rem}
+    .alarms-list input{margin-right:6px}
+    #addFarmForm .buttons{text-align:right;margin-top:8px}
+    #addFarmForm .buttons button{padding:6px 10px;border:none;border-radius:4px;
+      background:#3498db;color:#fff;cursor:pointer;margin-left:8px}
+    .search{margin-bottom:16px}
+    .search input{width:100%;padding:8px 12px;border:none;border-radius:4px;
+      background:#2c2c2c;color:var(--text);font-size:0.95rem}
+    .vat-info{font-size:0.85rem;color:#ccc;text-align:right;margin-bottom:8px}
+    .vat-info div{margin:2px 0}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+    .card{background:var(--panel-bg);border:1px solid var(--border);
+      border-radius:6px;display:flex;flex-direction:column;padding:16px}
+    .card-header{margin-bottom:8px}
+    .card-header .supplier{font-weight:bold;color:var(--text);
+      text-decoration:none;font-size:1rem}
+    .card-body{flex:1;margin-bottom:12px}
+    .card-body a{text-decoration:none;color:inherit}
+    .status{display:inline-flex;align-items:center;font-size:0.9rem;
+      padding:4px 8px;border-radius:4px;color:#fff;margin-bottom:8px}
+    .status-ok{background:var(--ok)}
+    .status-warning{background:var(--warning)}
+    .status-info{background:var(--info)}
+    .status-critical{background:var(--critical)}
+    .status .dot{width:10px;height:10px;border-radius:50%;
+      background:currentColor;margin-right:6px}
+    .alarm-name,.time{font-size:0.85rem;color:#ccc;margin-bottom:4px}
+    .card-actions{display:flex;gap:8px}
+    .card-actions button{flex:1;padding:6px 8px;font-size:0.9rem;
+      border:none;border-radius:4px;cursor:pointer}
+    .btn-ticket{background:var(--critical);color:#fff}
+    .btn-edit{background:#3498db;color:#fff}
+    .permissions{margin:24px 0;text-align:center;font-size:0.9rem}
+    .permissions label{margin:0 12px;cursor:pointer}
+    .permissions input{margin-right:4px}
+    .footer-btn{text-align:center;margin-bottom:24px}
+    .footer-btn button{padding:10px 20px;font-size:1rem;
+      background:#3498db;color:#fff;border:none;border-radius:4px;cursor:pointer}
   </style>
 </head>
 <body>
@@ -101,7 +91,7 @@
       </div>
     </div>
 
-    <!-- Add Farm Form -->
+    <!-- Add Farm -->
     <div class="add-farm-btn">
       <button id="showAddForm">+ Add Farm</button>
     </div>
@@ -143,80 +133,90 @@
       'Agitator Fault','Vat Hot Wash','Battery Low Alarm',
       'Chiller Condition','temperature fault'
     ];
-    const historyCfg = {
-      '12345':{criticalOn:'2025-05-10 08:00',warningOn:null},
-      '52440':{criticalOn:null,warningOn:'2025-05-11 09:30'},
-      '44074':{criticalOn:null,warningOn:null},
-      '35421':{criticalOn:null,warningOn:null},
-      '98765':{criticalOn:null,warningOn:null},
-      '24680':{criticalOn:null,warningOn:null},
-      '13579':{criticalOn:null,warningOn:null},
-      '11223':{criticalOn:null,warningOn:null},
-      '99887':{criticalOn:null,warningOn:null},
-      '55678':{criticalOn:null,warningOn:null}
-    };
-    const LS_FARMS='farms', LS_TICKETS='tickets';
-    let currentRole='admin';
 
-    // Load farms
+    // 1) Seed exactly one Critical and one Warning
+    const historyCfg = {
+      '12345': { criticalOn: '2025-05-29 09:00', warningOn: null },
+      '52440': { criticalOn: null, warningOn:  '2025-05-29 10:30' },
+      '44074': { criticalOn: null, warningOn: null },
+      '35421': { criticalOn: null, warningOn: null },
+      '98765': { criticalOn: null, warningOn: null },
+      '24680': { criticalOn: null, warningOn: null },
+      '13579': { criticalOn: null, warningOn: null },
+      '11223': { criticalOn: null, warningOn: null },
+      '99887': { criticalOn: null, warningOn: null },
+      '55678': { criticalOn: null, warningOn: null }
+    };
+
+    const LS_FARMS   = 'farms';
+    const LS_TICKETS = 'tickets';
+    let currentRole = 'admin';
+
+    // 2) Load farms, ensure vats
     function loadFarms(){
-      let f=JSON.parse(localStorage.getItem(LS_FARMS)||'null');
+      let f = JSON.parse(localStorage.getItem(LS_FARMS)||'null');
       if(!f){
-        f=Object.keys(historyCfg).map(s=>({supplier:s,name:'',activeAlarms:[...ALARMS]}));
+        f = Object.keys(historyCfg).map(s=>({
+          supplier:s, name:'', activeAlarms:[...ALARMS]
+        }));
       }
-      // ensure vats
-      let ch=false;
+      let changed=false;
       f.forEach(x=>{
         if(!Array.isArray(x.vats)){
-          x.vats=[Math.floor(Math.random()*20000)];
-          if(Math.random()<0.1)x.vats.push(Math.floor(Math.random()*20000));
-          ch=true;
+          x.vats=[Math.floor(2000+Math.random()*18000)];
+          if(Math.random()<0.1)x.vats.push(Math.floor(2000+Math.random()*18000));
+          changed=true;
         }
       });
-      if(ch) localStorage.setItem(LS_FARMS,JSON.stringify(f));
+      if(changed) localStorage.setItem(LS_FARMS, JSON.stringify(f));
       return f;
     }
     function saveFarms(a){localStorage.setItem(LS_FARMS,JSON.stringify(a));}
-    function loadTickets(){return JSON.parse(localStorage.getItem(LS_TICKETS)||'[]');}
-    function saveTickets(a){localStorage.setItem(LS_TICKETS,JSON.stringify(a));}
 
-    let farmsList=loadFarms(), tickets=loadTickets();
+    // 3) Ticket storage
+    function loadTickets(){ return JSON.parse(localStorage.getItem(LS_TICKETS)||'[]'); }
+    function saveTickets(a){ localStorage.setItem(LS_TICKETS, JSON.stringify(a)); }
+    let farmsList = loadFarms(), tickets = loadTickets();
 
-    // Build overview and sort
+    // 4) Build overview rows
     function makeOverview(f){
       const cfg=historyCfg[f.supplier]||{};
-      let status='Ok',alarm='',time='';
-      if(cfg.criticalOn){status='Critical';alarm='temperature fault';time=cfg.criticalOn;}
-      else if(cfg.warningOn){status='Warning';alarm='Battery Low Alarm';time=cfg.warningOn;}
-      return {...f,status,alarm,time};
+      let status='Ok', alarm='', time='';
+      if(cfg.criticalOn){ status='Critical'; alarm='temperature fault'; time=cfg.criticalOn; }
+      else if(cfg.warningOn){ status='Warning'; alarm='Battery Low Alarm'; time=cfg.warningOn; }
+      return {...f, status, alarm, time};
     }
-    let overviewData=farmsList.map(makeOverview)
+    let overviewData = farmsList.map(makeOverview)
       .sort((a,b)=>{
         const sev={'Critical':2,'Warning':1,'Info':0,'Ok':0};
-        return sev[b.status]-sev[a.status];
+        return sev[b.status] - sev[a.status];
       });
-    // Ensure exactly first is Critical, second is Warning
-    const cIdx=overviewData.findIndex(r=>r.status==='Critical');
-    if(cIdx>0) overviewData.unshift(overviewData.splice(cIdx,1)[0]);
-    const wIdx=overviewData.findIndex(r=>r.status==='Warning');
-    if(wIdx>1) overviewData.splice(1,0,overviewData.splice(wIdx,1)[0]);
+    // Force Critical first, Warning second
+    const ci=overviewData.findIndex(r=>r.status==='Critical');
+    if(ci>0) overviewData.unshift(overviewData.splice(ci,1)[0]);
+    const wi=overviewData.findIndex(r=>r.status==='Warning');
+    if(wi>1) overviewData.splice(1,0,overviewData.splice(wi,1)[0]);
 
-    // Render cards
+    // 5) Render cards
     function renderCards(rows){
       const c=document.getElementById('card-container'); c.innerHTML='';
       rows.forEach(r=>{
-        const tk=tickets.find(t=>t.supplier===r.supplier&&t.alertTime===r.time);
+        // find existing ticket
+        const tk = tickets.find(t=>t.supplier===r.supplier && t.alertTime===r.time);
         let ticketHTML='';
-        if(r.status==='Critical'&&(currentRole!=='processor')){
-          if(!tk) ticketHTML=`<button class="btn-ticket" onclick="location.href='ticket.html?sup=${r.supplier}&t=${encodeURIComponent(r.time)}'">Open Ticket</button>`;
-          else if(!tk.closeTime) ticketHTML=`<button class="btn-ticket" onclick="location.href='ticket.html?sup=${r.supplier}&t=${encodeURIComponent(r.time)}'">View Ticket</button>`;
-          else ticketHTML=`<div>Closed: ${tk.closeTime}</div>`;
+        if(r.status==='Critical' && currentRole!=='processor'){
+          if(!tk){
+            ticketHTML = `<button class="btn-ticket" onclick="openTicket('${r.supplier}','${r.time}')">Open Ticket</button>`;
+          } else if(!tk.closeTime){
+            ticketHTML = `<button class="btn-ticket" onclick="closeTicket('${tk.id}')">Close Ticket</button>`;
+          } else {
+            ticketHTML = `<div>Closed: ${tk.closeTime}</div>`;
+          }
         } else if(r.status==='Critical'){
-          ticketHTML=tk?(tk.closeTime?'Closed':'Open'):'';
+          ticketHTML = tk ? (tk.closeTime?'Closed':'Open') : '';
         }
-        const vatsHtml=r.vats.map((v,i)=>`<div>Vat ${i+1}: ${v.toLocaleString()} L</div>`).join('');
-        const card=document.createElement('div');
-        card.className='card';
+        const vatsHtml = r.vats.map((v,i)=>`<div>Vat ${i+1}: ${v.toLocaleString()} L</div>`).join('');
+        const card=document.createElement('div'); card.className='card';
         card.innerHTML=`
           <div class="card-header">
             <a href="dashboard.html?sup=${r.supplier}" class="supplier">#${r.supplier}</a>
@@ -240,7 +240,21 @@
     }
     renderCards(overviewData);
 
-    // Permissions & search
+    // 6) Ticket handlers
+    function openTicket(supplier, alertTime){
+      const id = supplier+'_'+alertTime;
+      tickets.push({ id, supplier, alertTime, openTime:new Date().toLocaleString() });
+      saveTickets(tickets);
+      renderCards(overviewData);
+    }
+    function closeTicket(id){
+      const t = tickets.find(x=>x.id===id);
+      t.closeTime = new Date().toLocaleString();
+      saveTickets(tickets);
+      renderCards(overviewData);
+    }
+
+    // 7) Permissions & search
     document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('change',e=>{
       currentRole=e.target.value; renderCards(overviewData);
     }));
@@ -249,10 +263,12 @@
       renderCards(overviewData.filter(r=>r.supplier.includes(q)));
     });
 
-    // Add farm
+    // 8) Add farm UI (unchanged)
     document.getElementById('showAddForm').onclick=()=>{
-      const div=document.getElementById('addFarmForm'), list=document.getElementById('alarmsCheckboxes');
-      list.innerHTML=''; ALARMS.forEach(name=>{
+      const div=document.getElementById('addFarmForm'),
+            list=document.getElementById('alarmsCheckboxes');
+      list.innerHTML='';
+      ALARMS.forEach(name=>{
         const id='chk_'+name.replace(/\s+/g,'');
         list.innerHTML+=`<label><input type="checkbox" id="${id}" value="${name}" checked/> ${name}</label>`;
       });
@@ -264,17 +280,17 @@
       if(!sup){alert('Supplier # required');return;}
       if(farmsList.some(f=>f.supplier===sup)){alert('Already exists');return;}
       const sel=[]; document.querySelectorAll('#alarmsCheckboxes input:checked').forEach(cb=>sel.push(cb.value));
-      farmsList.push({supplier:sup,name:'',activeAlarms:sel,vats:[Math.floor(Math.random()*20000)]});
+      farmsList.push({supplier:sup,name:'',activeAlarms:sel,vats:[Math.floor(2000+Math.random()*18000)]});
       saveFarms(farmsList);
-      overviewData=farmsList.map(makeOverview).sort((a,b)=>{
+      overviewData = farmsList.map(makeOverview).sort((a,b)=>{
         const sev={'Critical':2,'Warning':1,'Info':0,'Ok':0};
         return sev[b.status]-sev[a.status];
       });
-      // reapply forced positions
-      const ci=overviewData.findIndex(r=>r.status==='Critical');
-      if(ci>0) overviewData.unshift(overviewData.splice(ci,1)[0]);
-      const wi=overviewData.findIndex(r=>r.status==='Warning');
-      if(wi>1) overviewData.splice(1,0,overviewData.splice(wi,1)[0]);
+      // re-force first two
+      const ci2=overviewData.findIndex(x=>x.status==='Critical');
+      if(ci2>0) overviewData.unshift(overviewData.splice(ci2,1)[0]);
+      const wi2=overviewData.findIndex(x=>x.status==='Warning');
+      if(wi2>1) overviewData.splice(1,0,overviewData.splice(wi2,1)[0]);
       renderCards(overviewData);
       document.getElementById('addFarmForm').style.display='none';
     };
