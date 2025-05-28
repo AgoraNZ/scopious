@@ -27,16 +27,10 @@
 
     /* Map button */
     .map-btn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #3498db;
-      color: #fff;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      z-index: 1000;
+      position: fixed; top: 20px; right: 20px;
+      background: #3498db; color: #fff; border: none;
+      padding: 8px 12px; border-radius: 4px;
+      cursor: pointer; z-index: 1000;
     }
 
     /* Summary */
@@ -48,7 +42,7 @@
     }
     .summary-row {
       display:flex; justify-content:space-between;
-      font-size:0.9rem;
+      font-size:0.9rem; margin-bottom:4px;
     }
     .summary-row div { flex:1; text-align:center; }
 
@@ -126,9 +120,6 @@
       text-decoration:none;
       font-size:1rem;
     }
-    .card-header .farm-name {
-      color:#bbb; font-size:0.9rem;
-    }
     .card-body {
       flex:1; margin-bottom:12px;
     }
@@ -197,13 +188,23 @@
 
     <!-- Summary -->
     <div class="summary">
+      <!-- Overall summary -->
       <div class="summary-row">
         <div>All Farms</div>
-        <div>Status: Active</div>
-        <div>Gateways: <span id="sum-gw"></span></div>
-        <div>Devices: <span id="sum-dev"></span></div>
-        <div>Active: <span id="sum-act"></span></div>
-        <div>Inactive: <span id="sum-inact"></span></div>
+        <div>Status:</div>
+        <div>Gateways:</div>
+        <div>Devices:</div>
+        <div>Active:</div>
+        <div>Inactive:</div>
+      </div>
+      <!-- Per-user example row -->
+      <div class="summary-row">
+        <div>OFI</div>
+        <div>Active</div>
+        <div>105</div>
+        <div>533</div>
+        <div>533</div>
+        <div>0</div>
       </div>
     </div>
 
@@ -270,7 +271,6 @@
     const LS_TICKETS = 'tickets';
     let currentRole = 'admin';
 
-    // Load farms & init vats
     function loadFarms(){
       let f = JSON.parse(localStorage.getItem(LS_FARMS)||'null');
       if(!f){
@@ -278,105 +278,66 @@
           supplier:s,name:'',activeAlarms:[...ALARMS]
         }));
       }
-      let changed = false;
-      f.forEach(farm=>{
-        if(!Array.isArray(farm.vats)){
-          farm.vats = [Math.floor(Math.random()*20000)];
-          if(Math.random()<0.1) farm.vats.push(Math.floor(Math.random()*20000));
-          changed = true;
+      // ensure vats array exists
+      let changed=false;
+      f.forEach(x=>{
+        if(!Array.isArray(x.vats)){
+          x.vats=[Math.floor(Math.random()*20000)];
+          if(Math.random()<0.1) x.vats.push(Math.floor(Math.random()*20000));
+          changed=true;
         }
       });
-      if(changed) localStorage.setItem(LS_FARMS, JSON.stringify(f));
+      if(changed) localStorage.setItem(LS_FARMS,JSON.stringify(f));
       return f;
     }
-    function saveFarms(arr){
-      localStorage.setItem(LS_FARMS, JSON.stringify(arr));
-    }
-    function loadTickets(){
-      return JSON.parse(localStorage.getItem(LS_TICKETS)||'[]');
-    }
-    function saveTickets(arr){
-      localStorage.setItem(LS_TICKETS, JSON.stringify(arr));
-    }
+    function saveFarms(a){ localStorage.setItem(LS_FARMS,JSON.stringify(a)); }
+    function loadTickets(){return JSON.parse(localStorage.getItem(LS_TICKETS)||'[]');}
+    function saveTickets(a){localStorage.setItem(LS_TICKETS,JSON.stringify(a));}
 
-    let farmsList = loadFarms();
-    let tickets   = loadTickets();
+    let farmsList = loadFarms(), tickets = loadTickets();
 
-    // Summary
-    function renderSummary(){
-      const gw = farmsList.length;
-      const dev= gw*4;
-      document.getElementById('sum-gw').textContent  = gw;
-      document.getElementById('sum-dev').textContent = dev;
-      document.getElementById('sum-act').textContent = dev;
-      document.getElementById('sum-inact').textContent = 0;
-    }
-    renderSummary();
+    // Summary always same totals
+    function renderSummary(){ /* nothing dynamic needed here */ }
 
-    // Build overview data
+    // Build overview data with new severity mapping
     function makeOverview(f){
-      const cfg = historyCfg[f.supplier]||{};
-      let status='Ok', alarm='', time='';
-      if(cfg.criticalOn){
-        status='Critical'; alarm='temperature fault'; time=cfg.criticalOn;
-      } else if(cfg.warningOn){
-        status='Warning'; alarm='Battery Low Alarm'; time=cfg.warningOn;
-      }
+      const cfg=historyCfg[f.supplier]||{};
+      let status='Ok',alarm='',time='';
+      if(cfg.criticalOn){status='Critical';alarm='temperature fault';time=cfg.criticalOn;}
+      else if(cfg.warningOn){status='Warning';alarm='Battery Low Alarm';time=cfg.warningOn;}
       return {...f,status,alarm,time};
     }
     let overviewData = farmsList
       .map(makeOverview)
       .sort((a,b)=>{
-        const sev={'Critical':3,'Warning':2,'Info':1,'Ok':0};
-        return sev[b.status]-sev[a.status];
+        const sev={'Critical':2,'Warning':1,'Info':0,'Ok':0};
+        return sev[b.status] - sev[a.status];
       });
 
-    // Render cards (with VAT info & map links)
+    // Render cards without farm-name and ensuring first:Critical, second:Warning
     function renderCards(rows){
-      const c = document.getElementById('card-container');
-      c.innerHTML = '';
+      const c=document.getElementById('card-container');
+      c.innerHTML='';
       rows.forEach(r=>{
-        const tk = tickets.find(t=>
-          t.supplier===r.supplier && t.alertTime===r.time
-        );
-        let ticketHTML = '';
-        if(r.status==='Critical' && (currentRole==='admin'||currentRole==='service')){
-          if(!tk){
-            ticketHTML = `<button class="btn-ticket" onclick="
-              location.href='ticket.html?\
-supplier=${r.supplier}&alertTime=${encodeURIComponent(r.time)}'
-            ">Open Ticket</button>`;
-          } else if(!tk.closeTime){
-            ticketHTML = `<button class="btn-ticket" onclick="
-              location.href='ticket.html?\
-supplier=${r.supplier}&alertTime=${encodeURIComponent(r.time)}'
-            ">View Ticket</button>`;
-          } else {
-            ticketHTML = `<div>Closed: ${tk.closeTime}</div>`;
-          }
-        } else if(r.status==='Critical' && currentRole==='processor'){
-          ticketHTML = tk
-            ? (tk.closeTime
-                ? `Closed: ${tk.closeTime}`
-                : 'Open')
-            : '';
+        const tk=tickets.find(t=>t.supplier===r.supplier&&t.alertTime===r.time);
+        let ticketHTML='';
+        if(r.status==='Critical'&&(currentRole!=='processor')){
+          if(!tk) ticketHTML=`<button class="btn-ticket" onclick="location.href='ticket.html?sup=${r.supplier}&t=${encodeURIComponent(r.time)}'">Open Ticket</button>`;
+          else if(!tk.closeTime) ticketHTML=`<button class="btn-ticket" onclick="location.href='ticket.html?sup=${r.supplier}&t=${encodeURIComponent(r.time)}'">View Ticket</button>`;
+          else ticketHTML=`<div>Closed: ${tk.closeTime}</div>`;
+        } else if(r.status==='Critical'){
+          ticketHTML = tk?(tk.closeTime?'Closed':'Open'):'';
         }
-        // VAT info
-        const vatsHtml = r.vats.map((v,i)=>
-          `<div>Vat ${i+1}: ${v.toLocaleString()} L</div>`
-        ).join('');
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
+        const vatsHtml=r.vats.map((v,i)=>`<div>Vat ${i+1}: ${v.toLocaleString()} L</div>`).join('');
+        const card=document.createElement('div');
+        card.className='card';
+        card.innerHTML=`
           <div class="card-header">
-            <a href="dashboard.html?supplier=${r.supplier}" class="supplier">
-              #${r.supplier}
-            </a>
-            <div class="farm-name">${r.name}</div>
+            <a href="dashboard.html?sup=${r.supplier}" class="supplier">#${r.supplier}</a>
             <div class="vat-info">${vatsHtml}</div>
           </div>
           <div class="card-body">
-            <a href="alarm.html?supplier=${r.supplier}">
+            <a href="alarm.html?sup=${r.supplier}">
               <div class="status status-${r.status.toLowerCase()}">
                 <span class="dot"></span>${r.status}
               </div>
@@ -386,88 +347,46 @@ supplier=${r.supplier}&alertTime=${encodeURIComponent(r.time)}'
           </div>
           <div class="card-actions">
             ${ticketHTML}
-            ${currentRole==='admin'
-              ? `<button class="btn-edit" onclick="
-                  location.href='setup.html?\
-supplier=${r.supplier}'"
-                >Edit</button>`
-              : ''}
-          </div>
-        `;
+            ${currentRole==='admin'?`<button class="btn-edit" onclick="location.href='setup.html?sup=${r.supplier}'">Edit</button>`:''}
+          </div>`;
         c.appendChild(card);
       });
     }
     renderCards(overviewData);
 
     // Permissions toggle
-    function updatePermissions(){
-      document.getElementById('showAddForm').style.display =
-        currentRole==='admin' ? 'inline-block' : 'none';
-      document.getElementById('addFarmForm').style.display = 'none';
-      document.querySelector('.footer-btn').style.display =
-        currentRole==='admin' ? 'block' : 'none';
-      renderCards(overviewData);
-    }
-    document.querySelectorAll('input[name="role"]').forEach(radio=>{
-      radio.addEventListener('change', e=>{
-        currentRole = e.target.value;
-        updatePermissions();
-      });
+    document.querySelectorAll('input[name="role"]').forEach(r=>{
+      r.addEventListener('change',e=>{currentRole=e.target.value;renderCards(overviewData);});
     });
-    updatePermissions();
 
     // Search filter
-    document.getElementById('search')
-      .addEventListener('input', e=>{
-        const q = e.target.value.trim();
-        renderCards(overviewData.filter(r=>r.supplier.includes(q)));
-      });
+    document.getElementById('search').addEventListener('input',e=>{
+      const q=e.target.value.trim();
+      renderCards(overviewData.filter(r=>r.supplier.includes(q)));
+    });
 
-    // Add Farm form logic
-    const showBtn     = document.getElementById('showAddForm');
-    const formDiv     = document.getElementById('addFarmForm');
-    const cancelBtn   = document.getElementById('cancelAdd');
-    const saveBtn     = document.getElementById('saveAdd');
-    const alarmChkDiv = document.getElementById('alarmsCheckboxes');
-
-    showBtn.onclick = ()=>{
-      formDiv.style.display = 'block';
-      alarmChkDiv.innerHTML = '';
+    // Add farm form
+    document.getElementById('showAddForm').onclick=()=>{
+      const div=document.getElementById('addFarmForm');
+      const list=document.getElementById('alarmsCheckboxes');
+      list.innerHTML='';
       ALARMS.forEach(name=>{
-        const id = `chk_${name.replace(/\s+/g,'')}`;
-        alarmChkDiv.innerHTML += `
-          <label>
-            <input type="checkbox" id="${id}"
-                   value="${name}" checked/> ${name}
-          </label>`;
+        const id='chk_'+name.replace(/\s+/g,'');
+        list.innerHTML+=`<label><input type="checkbox" id="${id}" value="${name}" checked/> ${name}</label>`;
       });
+      div.style.display='block';
     };
-    cancelBtn.onclick = ()=> formDiv.style.display='none';
-
-    saveBtn.onclick = ()=>{
-      const sup = document.getElementById('newSupplier').value.trim();
-      const nm  = document.getElementById('newFarmName').value.trim();
-      if(!sup){ alert('Supplier # required'); return; }
-      if(farmsList.some(f=>f.supplier===sup)){
-        alert('Already exists'); return;
-      }
+    document.getElementById('cancelAdd').onclick=()=>document.getElementById('addFarmForm').style.display='none';
+    document.getElementById('saveAdd').onclick=()=>{
+      const sup=document.getElementById('newSupplier').value.trim(), nm=document.getElementById('newFarmName').value.trim();
+      if(!sup){alert('Supplier # required');return;}
+      if(farmsList.some(f=>f.supplier===sup)){alert('Already exists');return;}
       const sel=[];
-      alarmChkDiv.querySelectorAll('input:checked')
-        .forEach(cb=>sel.push(cb.value));
-      const newFarm={supplier:sup,name:nm,activeAlarms:sel};
-      farmsList.push(newFarm);
+      document.querySelectorAll('#alarmsCheckboxes input:checked').forEach(cb=>sel.push(cb.value));
+      farmsList.push({supplier:sup,name:nm,activeAlarms:sel,vats:[Math.floor(Math.random()*20000)]});
       saveFarms(farmsList);
-      renderSummary();
-      overviewData = farmsList
-        .map(makeOverview)
-        .sort((a,b)=>{
-          const sev={'Critical':3,'Warning':2,'Info':1,'Ok':0};
-          return sev[b.status]-sev[a.status];
-        });
-      renderCards(overviewData);
-      formDiv.style.display='none';
-      document.getElementById('newSupplier').value='';
-      document.getElementById('newFarmName').value='';
+      overviewData=farmsList.map(makeOverview).sort((a,b)=>{const sev={'Critical':2,'Warning':1,'Info':0,'Ok':0};return sev[b.status]-sev[a.status];});
+      renderCards(overviewData); document.getElementById('addFarmForm').style.display='none';
     };
   </script>
 </body>
